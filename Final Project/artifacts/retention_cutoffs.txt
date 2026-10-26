@@ -1,0 +1,27 @@
+EXACT RETENTION WINDOWS (1-day resolution, 0..130d; bin 130 = >=130d overflow)
+CLICK present on days: min=0 max<130=13  total_click=8,298,894
+CART  present on days: min=0 max<130=129 total_cart=11,526,504
+ORD   present on days: min=0 max<130=129  overflow(>=130d) ord=3,918,215
+
+CLICK events per day near the cutoff (days 3..12):
+   day   3: CLICK=1,145,341  CART=  172,236  ORD=   27,337
+   day   4: CLICK=1,111,199  CART=  169,568  ORD=   27,324
+   day   5: CLICK=1,068,745  CART=  167,673  ORD=   27,500
+   day   6: CLICK=  520,760  CART=  162,737  ORD=   27,187
+   day   7: CLICK=        5  CART=  164,231  ORD=   27,421
+   day   8: CLICK=       32  CART=  160,254  ORD=   26,924
+   day   9: CLICK=       25  CART=  156,635  ORD=   26,070
+   day  10: CLICK=       21  CART=  152,072  ORD=   24,676
+   day  11: CLICK=        6  CART=  148,008  ORD=   24,012
+   day  12: CLICK=        6  CART=  144,101  ORD=   23,274
+
+CART events per day near its cutoff (days 60..100):
+   day  60: CLICK=        0  CART=  119,952  ORD=   21,830
+   day  65: CLICK=        0  CART=    8,300  ORD=   10,971
+   day  70: CLICK=        0  CART=  109,327  ORD=   20,016
+   day  75: CLICK=        0  CART=  103,506  ORD=   20,430
+   day  80: CLICK=        0  CART=  103,020  ORD=   19,358
+   day  85: CLICK=        0  CART=  100,902  ORD=   18,637
+   day  90: CLICK=        0  CART=      365  ORD=   20,421
+   day  95: CLICK=        0  CART=       56  ORD=   19,964
+   day 100: CLICK=        0  CART=       10  ORD=   20,244
