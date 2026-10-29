@@ -1,0 +1,36 @@
+{
+  "seed": 42,
+  "variant": "short_only",
+  "epochs": [
+    {
+      "epoch": 1,
+      "loss": 3.436140361699191,
+      "val_ndcg10": 0.3670693264092427
+    },
+    {
+      "epoch": 2,
+      "loss": 3.2857781995426523,
+      "val_ndcg10": 0.36915472125819304
+    },
+    {
+      "epoch": 3,
+      "loss": 3.241060460697521,
+      "val_ndcg10": 0.3662886115636423
+    },
+    {
+      "epoch": 4,
+      "loss": 3.195295576615767,
+      "val_ndcg10": 0.36274801384695377
+    },
+    {
+      "epoch": 5,
+      "loss": 3.1308902545408768,
+      "val_ndcg10": 0.35399967312536346
+    }
+  ],
+  "best_validation_ndcg10": 0.36915472125819304,
+  "training_slate_width": 64,
+  "evaluation_slate_width": 200,
+  "batch_size": 128,
+  "device": "cpu"
+}

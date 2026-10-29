@@ -14,3 +14,15 @@ Final Project/artifacts/model/history.parquet
 .DS_Store
 __pycache__/
 *.pyc
+
+# Corrected experiment: keep small evidence tables/predictions; regenerate large inputs/models.
+Final Project/artifacts/corrected/model/candidates.parquet
+Final Project/artifacts/corrected/model/history.parquet
+Final Project/artifacts/corrected/model/meta_subset.parquet
+Final Project/artifacts/corrected/model/features.parquet
+Final Project/artifacts/corrected/model/*.pt
+Final Project/artifacts/corrected/model/*.joblib
+Final Project/artifacts/corrected/model/neural_preprocessing.json
+Final Project/data/
+audit/report_text.txt
+.venv/

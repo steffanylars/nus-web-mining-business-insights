@@ -1,0 +1,36 @@
+{
+  "seed": 42,
+  "variant": "dual",
+  "epochs": [
+    {
+      "epoch": 1,
+      "loss": 3.438246302171187,
+      "val_ndcg10": 0.36670152307236276
+    },
+    {
+      "epoch": 2,
+      "loss": 3.2857470664111053,
+      "val_ndcg10": 0.3689495053393516
+    },
+    {
+      "epoch": 3,
+      "loss": 3.2390516953034836,
+      "val_ndcg10": 0.36604900680614405
+    },
+    {
+      "epoch": 4,
+      "loss": 3.1878280813043767,
+      "val_ndcg10": 0.36192204107240655
+    },
+    {
+      "epoch": 5,
+      "loss": 3.1176138877868653,
+      "val_ndcg10": 0.3554921404956423
+    }
+  ],
+  "best_validation_ndcg10": 0.3689495053393516,
+  "training_slate_width": 64,
+  "evaluation_slate_width": 200,
+  "batch_size": 128,
+  "device": "cpu"
+}

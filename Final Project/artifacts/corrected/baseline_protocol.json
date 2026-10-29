@@ -1,0 +1,66 @@
+{
+  "query_counts": {
+    "Random": {
+      "queries_with_positive": 2965,
+      "all_queries": 3000
+    },
+    "Popularity": {
+      "queries_with_positive": 2965,
+      "all_queries": 3000
+    },
+    "Content/Relevance-only": {
+      "queries_with_positive": 2965,
+      "all_queries": 3000
+    },
+    "SVD(train-only fold-in)": {
+      "queries_with_positive": 2965,
+      "all_queries": 3000
+    },
+    "LambdaMART(features)": {
+      "queries_with_positive": 2965,
+      "all_queries": 3000
+    },
+    "LambdaMART(features)_train": {
+      "queries_with_positive": 13832,
+      "all_queries": 14000
+    },
+    "Popularity_train": {
+      "queries_with_positive": 13832,
+      "all_queries": 14000
+    },
+    "LambdaMART(features)_val": {
+      "queries_with_positive": 2967,
+      "all_queries": 3000
+    },
+    "Popularity_val": {
+      "queries_with_positive": 2967,
+      "all_queries": 3000
+    }
+  },
+  "seed": 42,
+  "svd_train_history_item_coverage": 0.19674092409240923,
+  "lgb_parameters": {
+    "objective": "lambdarank",
+    "metric": "None",
+    "learning_rate": 0.05,
+    "num_leaves": 63,
+    "min_data_in_leaf": 200,
+    "feature_fraction": 0.9,
+    "bagging_fraction": 0.9,
+    "bagging_freq": 1,
+    "label_gain": [
+      0,
+      1,
+      3,
+      7
+    ],
+    "verbosity": -1,
+    "seed": 42,
+    "num_threads": 6,
+    "deterministic": true,
+    "force_col_wise": true
+  },
+  "best_iteration": 237,
+  "evaluation": "macro full-slate metrics, positive queries only, deterministic ID tie keys",
+  "svd": "train-history item factors; held-out preceding history folded into fixed factors"
+}
