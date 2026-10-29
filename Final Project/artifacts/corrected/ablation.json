@@ -1,0 +1,50 @@
+{
+  "full": {
+    "NDCG@10": 0.3630055454799993,
+    "MRR@200": 0.3668825923922184,
+    "P@1": 0.22967959527824622,
+    "HR@10": 0.651602023608769
+  },
+  "no_temporal": {
+    "NDCG@10": 0.3386885586854313,
+    "MRR@200": 0.3433661802108337,
+    "P@1": 0.21315345699831367,
+    "HR@10": 0.621247892074199
+  },
+  "delta_NDCG10": 0.024316986794568007,
+  "removed_features": [
+    "aff_cat_decay",
+    "aff_brand_decay",
+    "short_cat_hit",
+    "short_brand_hit",
+    "long_cat_hit",
+    "long_brand_hit",
+    "h_min_elapsed",
+    "h_n_recent7",
+    "h_n_ord",
+    "h_n_cart",
+    "h_n_click"
+  ],
+  "params": {
+    "objective": "lambdarank",
+    "metric": "None",
+    "learning_rate": 0.05,
+    "num_leaves": 63,
+    "min_data_in_leaf": 200,
+    "feature_fraction": 0.9,
+    "bagging_fraction": 0.9,
+    "bagging_freq": 1,
+    "label_gain": [
+      0,
+      1,
+      3,
+      7
+    ],
+    "verbosity": -1,
+    "seed": 42,
+    "num_threads": 6,
+    "deterministic": true,
+    "force_col_wise": true
+  },
+  "interpretation": "temporal/action feature bundle, not a DHAR tower ablation"
+}

@@ -1,0 +1,149 @@
+{
+  "tokenizer_example": {
+    "actual": [
+      "12\u001832\u001856"
+    ],
+    "expected": [
+      "12",
+      "32",
+      "56"
+    ]
+  },
+  "sessions": {
+    "test": 3000,
+    "train": 14000,
+    "val": 3000
+  },
+  "prediction_integrity": {
+    "lgb_rows": 266640,
+    "neural_rows": 266640,
+    "duplicate_keys": 0,
+    "test_ids_match": true
+  },
+  "recomputed_metrics": {
+    "lgb_score": {
+      "metrics": {
+        "NDCG@10": 0.31246786016480677,
+        "MRR@200": 0.32461214219042306,
+        "P@1": 0.20404721753794267,
+        "HR@10": 0.578752107925801
+      },
+      "n": 2965
+    },
+    "dhar_score": {
+      "metrics": {
+        "NDCG@10": 0.33615596062328823,
+        "MRR@200": 0.351087963611868,
+        "P@1": 0.22934232715008432,
+        "HR@10": 0.6033726812816189
+      },
+      "n": 2965
+    },
+    "ncf_score": {
+      "metrics": {
+        "NDCG@10": 0.0857550078400877,
+        "MRR@200": 0.10431391984748045,
+        "P@1": 0.032715008431703205,
+        "HR@10": 0.22934232715008432
+      },
+      "n": 2965
+    }
+  },
+  "paired_bootstrap_saved_predictions": {
+    "delta": 0.023688100458481506,
+    "ci95": [
+      0.01689845952964323,
+      0.030104015450374638
+    ],
+    "caveat": "Conditional on these saved models and this sample; does not validate features or isolate architecture."
+  },
+  "raw_temporal": {
+    "users": 173831,
+    "alignment_failures": 0,
+    "types": [
+      "CLICK",
+      "CART",
+      "ORD",
+      "FLW"
+    ],
+    "counts_by_bin": [
+      [
+        64201,
+        10118,
+        1730,
+        9
+      ],
+      [
+        557917,
+        84790,
+        7936,
+        117
+      ],
+      [
+        1296171,
+        192320,
+        26775,
+        490
+      ],
+      [
+        6380498,
+        1047929,
+        166381,
+        2035
+      ],
+      [
+        107,
+        3300950,
+        553008,
+        7419
+      ],
+      [
+        0,
+        6889193,
+        1280095,
+        14509
+      ],
+      [
+        0,
+        1203,
+        1824126,
+        0
+      ],
+      [
+        0,
+        0,
+        2957232,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0
+      ]
+    ]
+  },
+  "sample_history_cap": {
+    "users": 20000,
+    "kept_history_rows": 907554,
+    "candidate_rows": 1781978,
+    "orders_before": 785868,
+    "orders_after": 128841,
+    "orders_older90_before": 550681,
+    "orders_older90_after": 60274,
+    "users_with_orders_before": 18310,
+    "users_with_orders_after": 15391,
+    "users_losing_all_orders": 2919
+  },
+  "raw_content_sample": {
+    "query_records": 200,
+    "pairs": 18218,
+    "metadata_matched_pairs": 18140,
+    "source_mean_overlap": 0.0,
+    "correct_mean_overlap": 1.961521499448732,
+    "source_nonzero_overlap_pairs": 0,
+    "correct_nonzero_overlap_pairs": 16994,
+    "source_mean_query_unique_tokens": 1.0,
+    "correct_mean_query_unique_tokens": 2.707111356119074
+  }
+}

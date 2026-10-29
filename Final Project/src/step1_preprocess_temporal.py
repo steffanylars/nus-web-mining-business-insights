@@ -4,7 +4,7 @@ Step 1: Parsing + Temporal History Analysis (addresses the instructor's feedback
 
 The instructor noted that in JDSearch, historical ORDERS and CARTS dramatically
 outnumber CLICKS, with millions of orders/carts having no recorded clicks.
-She asked us to trace the history timeline back in time: convert the consecutive
+They asked us to trace the history timeline back in time: convert the consecutive
 intervals (seconds in `history_time_list`) into elapsed days BEFORE the final
 test query, and watch what happens to the click / cart / order distribution as
 we trace user activity further back.
@@ -30,11 +30,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-SRC_USER = os.environ.get("JD_USER_TXT",
-    "/Users/steff/Library/CloudStorage/OneDrive-Personal/Descargas/Steffany/Estudios/NUS/BT4222 - Mining Web Data for Business Insights/Project/JDsearch/user_behavior_data.txt")
-BASE = Path("/Users/steff/Documents/GitHub/bt4212_finalProj/Final Project")
-ART = BASE / "artifacts"; FIG = BASE / "figures"
-ART.mkdir(parents=True, exist_ok=True); FIG.mkdir(parents=True, exist_ok=True)
+from config import SRC_USER, RES as ART, FIG, prepare
+from data_utils import elapsed_days
 
 TYPES = ["CLICK", "CART", "ORD", "FLW"]
 # elapsed-day bin edges
@@ -42,6 +39,7 @@ EDGES = [0, 1/1440, 1/24, 1, 7, 30, 90, 180, 365, np.inf]  # min, hour, day, wee
 LABELS = ["<1min", "1min-1h", "1h-1d", "1-7d", "7-30d", "30-90d", "90-180d", "180-365d", ">365d"]
 
 def main():
+    prepare()
     t0 = time.time()
     print("Loading user_behavior_data.txt (919MB)...", flush=True)
     df = pd.read_csv(SRC_USER, sep="\t", dtype=str, low_memory=False)
@@ -75,20 +73,10 @@ def main():
         n = len(types)
         if n == 0:
             continue
-        # time list expected length n+1; be defensive
-        tarr = np.array([float(x) for x in times], dtype=np.float64)
-        if len(tarr) == n + 1:
-            gaps = tarr  # [0, g01, g12, ..., g_{n-1->query}]
-            # elapsed_seconds[i] = sum(gaps[i+1:])
-            suffix = np.cumsum(gaps[::-1])[::-1]  # suffix[i] = sum(gaps[i:])
-            elapsed = suffix[1:]                   # elapsed[i] = sum(gaps[i+1:]) for i=0..n-1
-        elif len(tarr) == n:
-            # fallback: treat as gaps including final; suffix of full
-            suffix = np.cumsum(tarr[::-1])[::-1]
-            elapsed = suffix
-        else:
-            continue
-        total_time_zero += int((gaps == 0).sum()) if len(tarr) == n + 1 else 0
+        gaps = np.asarray([float(x) for x in times])
+        days_checked = elapsed_days(gaps, n)
+        elapsed = days_checked * 86400.
+        total_time_zero += int((gaps[1:] == 0).sum())
         days = elapsed / 86400.0
         bins = np.digitize(days, EDGES[1:], right=False)  # 0..len(LABELS)-1
         bins = np.clip(bins, 0, len(LABELS) - 1)
@@ -98,8 +86,6 @@ def main():
                 continue
             counts[ci, b] += 1
             total_events += 1
-            if days[0] is not None:
-                pass
         # recent vs old headline
         d = days
         for ti, dd in zip(types, d):
@@ -188,7 +174,7 @@ def main():
     ax.plot(x, tbl["ORD_share"].values * 100, "^-", color=colors["ORD"], label="ORD")
     ax.set_xticks(x); ax.set_xticklabels(LABELS, rotation=30, ha="right")
     ax.set_ylabel("Share within bin (%)"); ax.set_xlabel("Elapsed time before the test query")
-    ax.set_title("Click signal decays going back in time; carts/orders persist")
+    ax.set_title("Observed action composition changes with history age")
     ax.legend(); ax.grid(alpha=0.3)
     plt.tight_layout()
     fig.savefig(FIG / "fig_temporal_clickshare.png", dpi=150, bbox_inches="tight")

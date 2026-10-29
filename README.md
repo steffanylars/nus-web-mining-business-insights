@@ -1,18 +1,22 @@
-# BT4222 Project — Group 13 · Personalised Product Search on JDSearch
+# BT4222 Group 13 JDSearch project
 
-Group project for **BT4222 — Mining Web Data for Business Insights**, National University of Singapore.
+Personalised reranking of provided JDSearch candidate slates using query terms,
+product metadata and preceding user history.
 
-- **`Interim Report/`** — interim deliverable: data acquisition, EDA notebooks, figures, product-metadata chunks.
-- **`Final Project/`** — final deliverable. See **`Final Project/README.md`** for the full pipeline, results and how to run.
+On branch ethan, start with [Ethan's change log](Final%20Project/ETHAN_CHANGES.md).
+The [pipeline README](Final%20Project/README.md) contains reproduction instructions.
+Measured corrected results and the report narrative are in
+[artifacts/corrected](Final%20Project/artifacts/corrected).
 
-## Final project at a glance
-Re-rank each JDSearch query's candidate slate (ordinal labels 0/1/2/3) using the query, product metadata and
-user history. Key finding: a **telescoping log-retention window** (clicks ~7d, carts ~90d, orders ≥1yr) means
-interaction *type is confounded with recency* — which drives horizon-aware features and our **Dual-Horizon
-Attention Ranker (DHAR)**, the best model (NDCG@10 0.336) over NCF / MF / popularity / LambdaMART baselines.
+The corrected run preserves the original 20,000-user split and repairs term
+tokenization, history retention, CF/SVD protocols, evaluation and ablations.
+The temporal pattern supports horizon-aware features; the matched experiment
+does not establish a benefit for dual attention beyond the same-feature MLP.
 
-Deliverables: `Final Project/report/` (report PDF+DOCX, dataset/code listing), `Final Project/slides/` (PPTX),
-`Final Project/RESULTS.md`, `Final Project/AI_USAGE.md`.
+Original report/, slides/ and root artifacts/ inside Final Project are historical
+draft snapshots, retained for comparison. They are not the corrected submission.
+The team still needs to agree the report narrative, contribution statements
+and formatting against the course guideline.
 
-> Large raw data (919 MB / 4.5 GB) and heavy intermediate artifacts are git-ignored — download JDSearch from
-> https://github.com/rucliujn/JDsearch (see `Final Project/README.md`).
+Raw data are not redistributed. Obtain them from the
+[official JDSearch repository](https://github.com/rucliujn/JDsearch).

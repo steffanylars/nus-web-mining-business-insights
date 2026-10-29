@@ -1,0 +1,36 @@
+{
+  "seed": 42,
+  "variant": "pooled",
+  "epochs": [
+    {
+      "epoch": 1,
+      "loss": 3.4355204538865523,
+      "val_ndcg10": 0.3663086888296909
+    },
+    {
+      "epoch": 2,
+      "loss": 3.286352677778764,
+      "val_ndcg10": 0.36786561552232233
+    },
+    {
+      "epoch": 3,
+      "loss": 3.2449789025566793,
+      "val_ndcg10": 0.3657494710840238
+    },
+    {
+      "epoch": 4,
+      "loss": 3.201572463729165,
+      "val_ndcg10": 0.3646717219661314
+    },
+    {
+      "epoch": 5,
+      "loss": 3.142332744598389,
+      "val_ndcg10": 0.3563570427927446
+    }
+  ],
+  "best_validation_ndcg10": 0.36786561552232233,
+  "training_slate_width": 64,
+  "evaluation_slate_width": 200,
+  "batch_size": 128,
+  "device": "cpu"
+}

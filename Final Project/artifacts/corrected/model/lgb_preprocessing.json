@@ -1,0 +1,31 @@
+{
+  "feature_columns": [
+    "query_len",
+    "slate_size",
+    "has_meta",
+    "ov_name",
+    "ov_cat",
+    "ov_brand",
+    "jacc_name",
+    "pop_wid",
+    "pop_cate3",
+    "pop_brand",
+    "short_cat_hit",
+    "short_brand_hit",
+    "long_cat_hit",
+    "long_brand_hit",
+    "aff_cat_decay",
+    "aff_brand_decay",
+    "seen_before",
+    "q_hist_overlap",
+    "h_len",
+    "h_n_click",
+    "h_n_cart",
+    "h_n_ord",
+    "h_n_recent7",
+    "h_n_distinct_c3",
+    "h_min_elapsed",
+    "h_queryless"
+  ],
+  "schema_version": 2
+}

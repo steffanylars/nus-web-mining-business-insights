@@ -1,0 +1,9 @@
+Observed daily action-age counts, not verified JD retention policy.
+Users: 173,831. Bins [d,d+1); 366 is >=366 days.
+Sharp drops around 7/90 days are consistent with different logging windows.
+Rare events remain outside those approximate windows.
+CLICK: total=8,298,894, last occupied day bin=13
+CART: total=11,526,504, last occupied day bin=366
+ORD: total=6,817,283, last occupied day bin=364
+FLW: total=24,579, last occupied day bin=89
+Orders aged >=365 days: 0

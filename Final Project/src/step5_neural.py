@@ -1,209 +1,254 @@
-"""
-Step 5: Neural models (PyTorch, Apple MPS) -- VECTORISED padded-slate training.
+"""History-conditioned neural ranking and matched history-tower ablations.
 
-(C) Dual-Horizon Attention Ranker (DHAR) -- our architecture contribution.
-    Motivated by the Step-1 temporal finding (clicks 7d / carts 90d / orders 1yr
-    retention => interaction TYPE is confounded with RECENCY; fields play DISTINCT roles):
-      * SHORT-TERM INTENT tower : candidate-category attention over RECENT (<=7d) history categories
-      * LONG-TERM PREF  tower   : candidate-category attention over ORDER-history categories
-      * engineered content/popularity features fused in an MLP head
-    Trained listwise (softmax cross-entropy with ordinal label gains) over each query slate.
-(B) NCF baseline (GMF+MLP) on (session, item) ids -> exposes the CF cold ceiling.
-
-Batching: each session's slate is padded/sub-sampled to a fixed width so many slates
-are processed as one [B, S, ...] tensor (fast on MPS). Positives are always kept.
+All shared parameters/preprocessing use training users only. Held-out users are
+represented by their preceding history, never by an untrained user-ID embedding.
 """
-import time, json, math
-from pathlib import Path
-import numpy as np, pandas as pd
-import torch, torch.nn as nn, torch.nn.functional as F
+import argparse
+import copy
+import hashlib
+import json
+import math
+import random
+import time
+import numpy as np
+import pandas as pd
+import torch
+from torch import nn
+from torch.nn import functional as F
+from config import (OUT, RES, SEED, HISTORY_LENGTH, EPOCHS, BATCH_SIZE, THREADS,
+                    feature_columns, prepare, save_json)
+from data_utils import short_mask, select_sequence
 from eval_utils import evaluate
 
-OUT = Path("/Users/steff/Documents/GitHub/bt4212_finalProj/Final Project/artifacts/model")
-RES = Path("/Users/steff/Documents/GitHub/bt4212_finalProj/Final Project/artifacts")
-DEV = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-torch.manual_seed(42); np.random.seed(42)
-LG = np.array([0.,1.,3.,7.], dtype=np.float32)   # ordinal label gains
-L = 20          # history seq length per horizon
-S_TRAIN = 64    # slate width for training (keep positives + sampled negatives)
-S_EVAL = 200    # slate width for eval (full)
+VARIANTS = ['mlp','pooled','short_only','order_only','dual','history_cf']
+NAMES = {'mlp':'MLP(no towers)','pooled':'Pooled history','short_only':'Short only',
+         'order_only':'Order only','dual':'DHAR(ours)','history_cf':'History-conditioned CF'}
+BRAND_BUCKETS = 20000
 
-def main():
-    t0=time.time(); print("device:", DEV, flush=True)
-    feat = pd.read_parquet(OUT/"features.parquet")
-    hist = pd.read_parquet(OUT/"history.parquet")
-    meta = pd.read_parquet(OUT/"meta_subset.parquet").set_index("wid")
-    cate3 = meta["cate_id_3"].to_dict(); brand = meta["brand_id"].to_dict()
-    c3map = {c:i+1 for i,c in enumerate(pd.Series(list(cate3.values())).dropna().unique())}
-    NC3=len(c3map)+1; NB=20000
-    def bh(b): return 0 if (b is None or str(b)=="nan") else (hash(b)%(NB-1))+1
-    print(f"vocab c3={NC3} ({time.time()-t0:.0f}s)", flush=True)
+def device():
+    return torch.device('cuda' if torch.cuda.is_available() else
+                        'mps' if torch.backends.mps.is_available() else 'cpu')
 
-    hist=hist.copy()
-    hist["c3i"]=hist["wid"].map(cate3).map(lambda c:c3map.get(c,0)).fillna(0).astype(int)
-    rec=hist[hist.elapsed_days<=7]; ordh=hist[hist.type=="ORD"]
-    def seqmap(df):
-        d={}
-        for sid,g in df.groupby("session_id"): d[sid]=g["c3i"].values[-L:]
-        return d
-    short_seq=seqmap(rec); long_seq=seqmap(ordh)
+def seed_everything(seed):
+    random.seed(seed); np.random.seed(seed); torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
-    num_cols=[c for c in feat.columns if c not in {"session_id","cand_wid","label","split"}]
-    # standardise using TRAIN statistics only (no transductive leakage into val/test)
-    tr_mask=feat["split"]=="train"
-    mu=feat.loc[tr_mask,num_cols].mean(); sd=feat.loc[tr_mask,num_cols].std().replace(0,1)
-    feat[num_cols]=(feat[num_cols]-mu)/sd
-    feat["cand_c3i"]=feat["cand_wid"].map(cate3).map(lambda c:c3map.get(c,0)).fillna(0).astype(int)
-    feat["cand_bi"]=feat["cand_wid"].map(brand).map(bh).astype(int)
-    item_ids={w:i+1 for i,w in enumerate(feat["cand_wid"].unique())}
-    feat["ii"]=feat["cand_wid"].map(item_ids).astype(int)
-    NI=len(item_ids)+1; NU=int(feat.session_id.max())+1
-    Fn=len(num_cols)
+def brand_bucket(value):
+    if value is None or pd.isna(value) or str(value).strip() in {'','-1'}:
+        return 0
+    digest=hashlib.blake2b(str(value).encode(),digest_size=8).digest()
+    return int.from_bytes(digest,'little')%(BRAND_BUCKETS-1)+1
 
-    # ---- pack each session into fixed-width padded arrays ----
-    def pack(split, S, keep_pos=True):
-        d=feat[feat.split==split]
-        sids=[]; NUM=[]; C3=[]; BI=[]; II=[]; LAB=[]; MASK=[]; SS=[]; LS=[]; RIDX=[]
-        rng=np.random.default_rng(42)
-        for sid,g in d.groupby("session_id",sort=False):
-            idx=g.index.values; lab=g["label"].values
-            if len(idx)>S:
-                pos=np.where(lab>0)[0]; neg=np.where(lab==0)[0]
-                nneg=max(S-len(pos),0)
-                sel=np.concatenate([pos, rng.choice(neg,min(nneg,len(neg)),replace=False)]) if keep_pos \
-                    else rng.choice(len(idx),S,replace=False)
-                sel=sel[:S]
-            else:
-                sel=np.arange(len(idx))
-            m=len(sel)
-            pad=S-m
-            def padcol(a,fill=0): return np.concatenate([a, np.full(pad,fill,dtype=a.dtype)]) if pad>0 else a
-            sids.append(sid)
-            NUM.append(np.vstack([g[num_cols].values[sel], np.zeros((pad,Fn),dtype=np.float32)]) if pad>0 else g[num_cols].values[sel])
-            C3.append(padcol(g["cand_c3i"].values[sel]))
-            BI.append(padcol(g["cand_bi"].values[sel]))
-            II.append(padcol(g["ii"].values[sel]))
-            LAB.append(padcol(lab[sel].astype(np.float32)))
-            MASK.append(np.concatenate([np.ones(m),np.zeros(pad)]))
-            RIDX.append(padcol(idx[sel].astype(np.int64),fill=-1))
-            ss=np.zeros(L,dtype=np.int64); v=short_seq.get(sid)
-            if v is not None and len(v): ss[:min(len(v),L)]=v[:L]
-            ls=np.zeros(L,dtype=np.int64); v=long_seq.get(sid)
-            if v is not None and len(v): ls[:min(len(v),L)]=v[:L]
-            SS.append(ss); LS.append(ls)
-        T=lambda a,dt: torch.tensor(np.array(a),dtype=dt)
-        return dict(sid=sids,
-                    num=T(NUM,torch.float32),c3=T(C3,torch.long),bi=T(BI,torch.long),
-                    ii=T(II,torch.long),lab=T(LAB,torch.float32),mask=T(MASK,torch.float32),
-                    ss=T(SS,torch.long),ls=T(LS,torch.long),ridx=T(RIDX,torch.long))
-    tr=pack("train",S_TRAIN); va=pack("val",S_EVAL); te=pack("test",S_EVAL)
-    print(f"packed train{tr['num'].shape} val{va['num'].shape} test{te['num'].shape} ({time.time()-t0:.0f}s)", flush=True)
+def fit_preprocessing(feat,hist,meta,length):
+    cols=feature_columns(feat); train=feat.split.eq('train')
+    train_ids=set(feat.loc[train,'session_id'])
+    train_hist=hist[hist.session_id.isin(train_ids)]
+    train_wids=set(feat.loc[train,'cand_wid'])|set(train_hist.wid)
+    tm=meta[meta.wid.isin(train_wids)]
+    categories=sorted(c for c in tm.cate_id_3.dropna().unique() if str(c).strip())
+    mu=feat.loc[train,cols].mean()
+    sd=feat.loc[train,cols].std().fillna(1).replace(0,1)
+    return dict(schema_version=2,feature_columns=cols,mean=mu.tolist(),std=sd.tolist(),
+        category_ids={str(c):i+1 for i,c in enumerate(categories)},
+        item_ids={w:i+1 for i,w in enumerate(sorted(train_wids))},
+        history_length=length,cf_history_length=2*length,brand_buckets=BRAND_BUCKETS,
+        brand_hash='blake2b UTF-8, 8 bytes little-endian; modulo 19999 + 1',
+        sequence_policy='evenly spaced positions over each complete chronological horizon',
+        short_policy='CLICK <=7d or CART <=90d',order_policy='all preceding ORD events')
 
-    class DHAR(nn.Module):
-        def __init__(s,nc3,nb,d=32,nf=Fn):
-            super().__init__()
-            s.ec3=nn.Embedding(nc3,d,padding_idx=0); s.eb=nn.Embedding(nb,d,padding_idx=0)
-            s.ps=nn.Linear(d,d); s.pl=nn.Linear(d,d)
-            s.head=nn.Sequential(nn.Linear(4*d+nf,128),nn.ReLU(),nn.Dropout(0.2),
-                                 nn.Linear(128,64),nn.ReLU(),nn.Dropout(0.2),nn.Linear(64,1))
-        def attend(s,q,seq_emb,seqmask,proj):
-            # q:[B,S,d] seq_emb:[B,Lh,d] seqmask:[B,Lh]
-            qp=proj(q)                                   # [B,S,d]
-            sc=torch.einsum("bsd,bld->bsl",qp,seq_emb)/math.sqrt(seq_emb.size(-1))
-            sc=sc.masked_fill(~seqmask.bool().unsqueeze(1),-1e9)
-            w=torch.softmax(sc,dim=-1); w=torch.nan_to_num(w)
-            ctx=torch.einsum("bsl,bld->bsd",w,seq_emb) # [B,S,d]
-            return ctx
-        def forward(s,num,c3,bi,ss,ls):
-            qc=s.ec3(c3); qb=s.eb(bi)                   # [B,S,d]
-            se=s.ec3(ss); le=s.ec3(ls)                  # [B,Lh,d]
-            sm=(ss>0).float(); lm=(ls>0).float()
-            sctx=s.attend(qc,se,sm,s.ps); lctx=s.attend(qc,le,lm,s.pl)
-            x=torch.cat([qc,qb,sctx,lctx,num],dim=-1)
-            return s.head(x).squeeze(-1)                 # [B,S]
+def encode_frames(feat,hist,meta,prep):
+    frame=feat.copy()
+    cols=prep['feature_columns']
+    frame[cols]=((frame[cols]-np.array(prep['mean']))/np.array(prep['std'])).astype('float32')
+    if not np.isfinite(frame[cols].to_numpy()).all():
+        raise ValueError('Nonfinite neural features')
+    maps=meta.set_index('wid')
+    cat=maps.cate_id_3.to_dict(); brand=maps.brand_id.to_dict()
+    frame['_c3']=frame.cand_wid.map(cat).map(prep['category_ids']).fillna(0).astype(int)
+    frame['_bi']=frame.cand_wid.map(brand).map(brand_bucket).astype(int)
+    frame['_ii']=frame.cand_wid.map(prep['item_ids']).fillna(0).astype(int)
+    h=hist.sort_values(['session_id','pos']).copy()
+    h['_c3']=h.wid.map(cat).map(prep['category_ids']).fillna(0).astype(int)
+    h['_ii']=h.wid.map(prep['item_ids']).fillna(0).astype(int)
+    sequences={}; coverage={}
+    for name,subset,col,length in [
+        ('short',h[short_mask(h)],'_c3',prep['history_length']),
+        ('order',h[h.type.eq('ORD')],'_c3',prep['history_length']),
+        ('cf',h,'_ii',prep['cf_history_length'])]:
+        seq={}; eligible=retained=unknown=0
+        for sid,g in subset.groupby('session_id',sort=False):
+            values=g[col].to_numpy()
+            eligible+=len(values); unknown+=int((values==0).sum())
+            # Unknown metadata/items are excluded before position sampling.
+            selected=select_sequence(values[values>0],length)
+            seq[sid]=selected; retained+=len(selected)
+        sequences[name]=seq
+        coverage[name]={'eligible_events':eligible,'unknown_events':unknown,'selected_events':retained,
+                        'users_with_known_sequence':sum(bool(len(v)) for v in seq.values())}
+    return frame,sequences,coverage
 
-    def listwise(scores,lab,mask):
-        # softmax CE with ordinal gains over valid slate positions
-        g=torch.tensor(LG,device=scores.device)[lab.long().clamp(0,3)]
-        g=g.masked_fill(mask==0,0.0)
-        tgt=g/ (g.sum(1,keepdim=True)+1e-9)
-        sc=scores.masked_fill(mask==0,-1e9)
-        logp=F.log_softmax(sc,dim=1)
-        hasp=(g.sum(1)>0).float()
-        return -((tgt*logp).sum(1)*hasp).sum()/(hasp.sum()+1e-9)
+def pack(frame,sequences,prep,split,width=200,seed=SEED):
+    cols=prep['feature_columns']; groups=frame[frame.split.eq(split)].groupby('session_id',sort=True)
+    n=len(groups); nf=len(cols); L=prep['history_length']; H=prep['cf_history_length']
+    arrays=dict(num=np.zeros((n,width,nf),dtype=np.float32),
+        c3=np.zeros((n,width),dtype=np.int64),bi=np.zeros((n,width),dtype=np.int64),
+        ii=np.zeros((n,width),dtype=np.int64),lab=np.zeros((n,width),dtype=np.int64),
+        mask=np.zeros((n,width),dtype=bool),ridx=np.full((n,width),-1,dtype=np.int64),
+        short=np.zeros((n,L),dtype=np.int64),order=np.zeros((n,L),dtype=np.int64),
+        cf=np.zeros((n,H),dtype=np.int64))
+    for row,(sid,g) in enumerate(groups):
+        # Canonical order prevents source positions influencing sampling/roundoff.
+        g=g.sort_values('cand_wid')
+        if len(g)>width:
+            if split!='train':
+                raise ValueError('Evaluation must use every supplied candidate')
+            rng=np.random.default_rng(np.random.SeedSequence([seed,int(sid)]))
+            pos=np.flatnonzero(g.label.to_numpy()>0); neg=np.flatnonzero(g.label.to_numpy()==0)
+            if len(pos)>width:
+                raise ValueError('Training width is smaller than number of positives')
+            selected=np.r_[pos,rng.choice(neg,width-len(pos),replace=False)]
+            g=g.iloc[selected].sort_values('cand_wid')
+        m=len(g)
+        arrays['num'][row,:m]=g[cols].to_numpy(dtype=np.float32)
+        for key,col in [('c3','_c3'),('bi','_bi'),('ii','_ii'),('lab','label')]:
+            arrays[key][row,:m]=g[col].to_numpy()
+        arrays['mask'][row,:m]=True; arrays['ridx'][row,:m]=g.index.to_numpy()
+        for key in ['short','order','cf']:
+            v=sequences[key].get(sid,[])
+            arrays[key][row,:len(v)]=v
+    return {k:torch.from_numpy(v) for k,v in arrays.items()}
 
-    def eval_pack(model,pk):
-        model.eval(); sc_all=np.zeros(len(feat))
-        with torch.no_grad():
-            for b in range(0,len(pk["sid"]),256):
-                sl=slice(b,b+256)
-                sc=model(pk["num"][sl].to(DEV),pk["c3"][sl].to(DEV),pk["bi"][sl].to(DEV),
-                         pk["ss"][sl].to(DEV),pk["ls"][sl].to(DEV)).cpu().numpy()
-                ridx=pk["ridx"][sl].numpy(); mask=pk["mask"][sl].numpy()
-                for i in range(sc.shape[0]):
-                    valid=mask[i]>0
-                    sc_all[ridx[i][valid]]=sc[i][valid]
-        return sc_all
+class DHAR(nn.Module):
+    def __init__(self,nc3,nb,nf,variant='dual',d=32,**unused):
+        super().__init__(); self.variant=variant
+        self.ec3=nn.Embedding(nc3,d,padding_idx=0); self.eb=nn.Embedding(nb,d,padding_idx=0)
+        self.ps=nn.Linear(d,d); self.pl=nn.Linear(d,d)
+        self.head=nn.Sequential(nn.Linear(4*d+nf,128),nn.ReLU(),nn.Dropout(.2),
+            nn.Linear(128,64),nn.ReLU(),nn.Dropout(.2),nn.Linear(64,1))
+    def attend(self,q,seq,projection):
+        emb=self.ec3(seq); mask=seq>0
+        score=torch.einsum('bsd,bld->bsl',projection(q),emb)/math.sqrt(emb.size(-1))
+        score=score.masked_fill(~mask[:,None,:],-1e9)
+        weight=torch.softmax(score,dim=-1)*mask[:,None,:]
+        weight=weight/weight.sum(-1,keepdim=True).clamp_min(1e-9)
+        return torch.einsum('bsl,bld->bsd',weight,emb)
+    def forward(self,num,c3,bi,ii,short,order,cf):
+        qc=self.ec3(c3); qb=self.eb(bi); sc=torch.zeros_like(qc); lc=torch.zeros_like(qc)
+        if self.variant in {'dual','short_only'}:
+            sc=self.attend(qc,short,self.ps)
+        if self.variant in {'dual','order_only'}:
+            lc=self.attend(qc,order,self.pl)
+        if self.variant=='pooled':
+            both=torch.cat([short,order],dim=1); mask=both>0
+            pool=(self.ec3(both)*mask[:,:,None]).sum(1)/mask.sum(1,keepdim=True).clamp_min(1)
+            sc=pool[:,None,:].expand_as(qc); lc=sc
+        return self.head(torch.cat([qc,qb,sc,lc,num],dim=-1)).squeeze(-1)
 
-    model=DHAR(NC3,NB).to(DEV); opt=torch.optim.Adam(model.parameters(),lr=2e-3,weight_decay=1e-6)
-    print("Training DHAR ...", flush=True)
-    best=-1; best_state=None; bad=0
-    for ep in range(1,21):
-        model.train(); perm=np.random.permutation(len(tr["sid"])); tot=0;nb=0
-        for b in range(0,len(perm),256):
-            ix=perm[b:b+256]
-            sc=model(tr["num"][ix].to(DEV),tr["c3"][ix].to(DEV),tr["bi"][ix].to(DEV),
-                     tr["ss"][ix].to(DEV),tr["ls"][ix].to(DEV))
-            loss=listwise(sc,tr["lab"][ix].to(DEV),tr["mask"][ix].to(DEV))
-            opt.zero_grad(); loss.backward(); opt.step(); tot+=float(loss);nb+=1
-        vs=eval_pack(model,va); vd=feat[feat.split=="val"].copy(); vd["s"]=vs[vd.index.values]
-        m,_=evaluate(vd,"s"); nd=m["NDCG@10"]
-        print(f"  epoch {ep:2d} | loss {tot/nb:.4f} | val NDCG@10 {nd:.4f} ({time.time()-t0:.0f}s)", flush=True)
-        if nd>best: best=nd; best_state={k:v.cpu().clone() for k,v in model.state_dict().items()}; bad=0
+class HistoryCF(nn.Module):
+    """GMF+MLP with a mean history encoder instead of per-session embeddings."""
+    def __init__(self,ni,d=32,**unused):
+        super().__init__()
+        self.item=nn.Embedding(ni,d,padding_idx=0)
+        self.mlp=nn.Sequential(nn.Linear(2*d,64),nn.ReLU(),nn.Linear(64,32),nn.ReLU())
+        self.out=nn.Linear(d+32,1)
+    def forward(self,num,c3,bi,ii,short,order,cf):
+        mask=cf>0
+        user=(self.item(cf)*mask[:,:,None]).sum(1)/mask.sum(1,keepdim=True).clamp_min(1)
+        candidate=self.item(ii); user=user[:,None,:].expand_as(candidate)
+        return self.out(torch.cat([user*candidate,self.mlp(torch.cat([user,candidate],-1))],-1)).squeeze(-1)
+
+def listwise(scores,lab,mask):
+    gain=torch.tensor([0.,1.,3.,7.],device=scores.device)[lab]*mask
+    target=gain/gain.sum(1,keepdim=True).clamp_min(1e-9)
+    loss=-(target*F.log_softmax(scores.masked_fill(~mask,-1e9),dim=1)).sum(1)
+    positive=gain.sum(1)>0
+    return loss[positive].mean() if positive.any() else scores.sum()*0
+
+def forward_batch(model,pk,indices,dev):
+    return model(*[pk[k][indices].to(dev) for k in ['num','c3','bi','ii','short','order','cf']])
+
+def predict_pack(model,pk,n_rows,dev):
+    model.eval(); scores=np.zeros(n_rows,dtype=np.float32)
+    with torch.no_grad():
+        for a in range(0,len(pk['num']),BATCH_SIZE):
+            sl=slice(a,a+BATCH_SIZE)
+            value=forward_batch(model,pk,sl,dev).cpu().numpy()
+            ids=pk['ridx'][sl].numpy(); mask=pk['mask'][sl].numpy()
+            scores[ids[mask]]=value[mask]
+    return scores
+
+def train_one(variant,prep,frame,packs,seed,dev):
+    seed_everything(seed)
+    spec=dict(nc3=len(prep['category_ids'])+1,nb=prep['brand_buckets'],
+              nf=len(prep['feature_columns']),ni=len(prep['item_ids'])+1,variant=variant)
+    model=(HistoryCF(**spec) if variant=='history_cf' else DHAR(**spec)).to(dev)
+    optimizer=torch.optim.Adam(model.parameters(),lr=.002,weight_decay=1e-6)
+    best=-1.; state=None; bad=0; log=[]; start=time.time()
+    val=frame[frame.split.eq('val')].copy()
+    tr=packs['train']
+    for epoch in range(1,EPOCHS+1):
+        model.train(); perm=np.random.permutation(len(tr['num'])); total=0.; batches=0
+        for a in range(0,len(perm),BATCH_SIZE):
+            ix=perm[a:a+BATCH_SIZE]
+            score=forward_batch(model,tr,ix,dev)
+            loss=listwise(score,tr['lab'][ix].to(dev),tr['mask'][ix].to(dev))
+            optimizer.zero_grad(); loss.backward(); optimizer.step()
+            total+=float(loss.detach()); batches+=1
+        scores=predict_pack(model,packs['val'],len(frame),dev)
+        val['score']=scores[val.index.to_numpy()]
+        metrics,n=evaluate(val,'score'); ndcg=metrics['NDCG@10']
+        log.append(dict(epoch=epoch,loss=total/max(batches,1),val_ndcg10=ndcg))
+        print(f'{variant} seed={seed} epoch={epoch} val={ndcg:.5f} elapsed={time.time()-start:.0f}s',flush=True)
+        if ndcg>best:
+            best=ndcg; state=copy.deepcopy({k:v.detach().cpu() for k,v in model.state_dict().items()}); bad=0
         else:
             bad+=1
-            if bad>=3: print("  early stop",flush=True); break
-    model.load_state_dict(best_state)
-    ts=eval_pack(model,te); td=feat[feat.split=="test"].copy(); td["dhar_score"]=ts[td.index.values]
-    m,n=evaluate(td,"dhar_score")
-    print(f"\nDHAR TEST | NDCG@10 {m['NDCG@10']:.4f} | MRR@200 {m['MRR@200']:.4f} | P@1 {m['P@1']:.4f} | HR@10 {m['HR@10']:.4f} (n={n})", flush=True)
-    # TRAIN performance (overfitting check)
-    tre=pack("train",S_EVAL)
-    trs=eval_pack(model,tre); trd2=feat[feat.split=="train"].copy(); trd2["dh"]=trs[trd2.index.values]
-    m_tr,_=evaluate(trd2,"dh")
-    print(f"DHAR TRAIN | NDCG@10 {m_tr['NDCG@10']:.4f} (test {m['NDCG@10']:.4f})", flush=True)
+            if bad>=3: break
+    model.load_state_dict(state)
+    name=f'{variant}_seed{seed}'
+    torch.save({'state_dict':state,'spec':spec,'schema_version':2},OUT/f'{name}.pt')
+    save_json(RES/f'training_{name}.json',dict(seed=seed,variant=variant,epochs=log,
+        best_validation_ndcg10=best,training_slate_width=packs['train']['mask'].shape[1],
+        evaluation_slate_width=200,batch_size=BATCH_SIZE,device=str(dev)))
+    return model
 
-    # ---- NCF baseline (vectorised) ----
-    print("Training NCF ...", flush=True)
-    class NCF(nn.Module):
-        def __init__(s,nu,ni,d=32):
-            super().__init__(); s.ug=nn.Embedding(nu,d); s.ig=nn.Embedding(ni,d)
-            s.um=nn.Embedding(nu,d); s.im=nn.Embedding(ni,d)
-            s.mlp=nn.Sequential(nn.Linear(2*d,64),nn.ReLU(),nn.Linear(64,32),nn.ReLU()); s.out=nn.Linear(d+32,1)
-        def forward(s,u,i):
-            return s.out(torch.cat([s.ug(u)*s.ig(i),s.mlp(torch.cat([s.um(u),s.im(i)],-1))],-1)).squeeze(-1)
-    ncf=NCF(NU,NI).to(DEV); opt2=torch.optim.Adam(ncf.parameters(),lr=2e-3)
-    trd=feat[feat.split=="train"]
-    U=torch.tensor(trd["session_id"].values); I=torch.tensor(trd["ii"].values)
-    Yb=torch.tensor((trd["label"].values>0).astype(np.float32))
-    for ep in range(1,6):
-        ncf.train(); perm=torch.randperm(len(U)); tot=0;nb=0
-        for b in range(0,len(perm),8192):
-            ix=perm[b:b+8192]
-            sc=ncf(U[ix].to(DEV),I[ix].to(DEV)); loss=F.binary_cross_entropy_with_logits(sc,Yb[ix].to(DEV))
-            opt2.zero_grad(); loss.backward(); opt2.step(); tot+=float(loss);nb+=1
-        print(f"  ncf epoch {ep} loss {tot/nb:.4f}", flush=True)
-    ncf.eval();
-    with torch.no_grad():
-        Ut=torch.tensor(td["session_id"].values).to(DEV); It=torch.tensor(td["ii"].values).to(DEV)
-        td["ncf_score"]=ncf(Ut,It).cpu().numpy()
-    mn,_=evaluate(td,"ncf_score")
-    print(f"NCF TEST | NDCG@10 {mn['NDCG@10']:.4f} | MRR@200 {mn['MRR@200']:.4f} | P@1 {mn['P@1']:.4f} | HR@10 {mn['HR@10']:.4f}", flush=True)
+def main():
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--variants',nargs='+',choices=VARIANTS,default=VARIANTS)
+    parser.add_argument('--seeds',nargs='+',type=int,default=[SEED])
+    args=parser.parse_args()
+    prepare(); torch.set_num_threads(THREADS); dev=device()
+    print('device',dev,flush=True)
+    feat=pd.read_parquet(OUT/'features.parquet')
+    hist=pd.read_parquet(OUT/'history.parquet')
+    meta=pd.read_parquet(OUT/'meta_subset.parquet')
+    prep=fit_preprocessing(feat,hist,meta,HISTORY_LENGTH)
+    save_json(OUT/'neural_preprocessing.json',prep)
+    frame,sequences,coverage=encode_frames(feat,hist,meta,prep)
+    save_json(RES/'horizon_coverage.json',coverage)
+    # Same fixed negative sample and complete eval slates for every architecture.
+    packs={s:pack(frame,sequences,prep,s,64 if s=='train' else 200)
+           for s in ['train','val','test']}
+    results={}; predictions=feat.loc[feat.split.eq('test'),['session_id','cand_wid','label']].copy()
+    for seed in args.seeds:
+        for variant in args.variants:
+            model=train_one(variant,prep,frame,packs,seed,dev)
+            key=NAMES[variant] if len(args.seeds)==1 else f'{NAMES[variant]} seed{seed}'
+            test_scores=predict_pack(model,packs['test'],len(frame),dev)
+            col=f'{variant}_score' if len(args.seeds)==1 else f'{variant}_seed{seed}_score'
+            predictions[col]=test_scores[predictions.index.to_numpy()]
+            m,n=evaluate(predictions,col); results[key]=m
+            print('TEST',key,m,flush=True)
+            val=frame[frame.split.eq('val')].copy()
+            score=predict_pack(model,packs['val'],len(frame),dev)
+            val['score']=score[val.index.to_numpy()]
+            results[key+'_val']=evaluate(val,'score')[0]
+            # Incremental saves allow a long CPU run to be resumed/reviewed.
+            predictions.to_parquet(OUT/'test_pred_neural.parquet',index=False)
+            save_json(RES/'results_neural.json',results)
+            del model
+    print('Neural variants complete',flush=True)
 
-    json.dump({"DHAR(ours)":m,"DHAR(ours)_train":m_tr,"NCF(neural)":mn}, open(RES/"results_neural.json","w"), indent=2)
-    td[["session_id","cand_wid","label","dhar_score","ncf_score"]].to_parquet(OUT/"test_pred_neural.parquet",index=False)
-    torch.save(model.state_dict(), OUT/"dhar.pt")
-    print(f"DONE step5 ({time.time()-t0:.0f}s)", flush=True)
-
-if __name__=="__main__":
+if __name__=='__main__':
     main()

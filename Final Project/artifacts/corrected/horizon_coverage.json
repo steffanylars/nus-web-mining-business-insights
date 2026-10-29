@@ -1,0 +1,20 @@
+{
+  "short": {
+    "eligible_events": 2301544,
+    "unknown_events": 81178,
+    "selected_events": 337562,
+    "users_with_known_sequence": 19569
+  },
+  "order": {
+    "eligible_events": 785868,
+    "unknown_events": 69835,
+    "selected_events": 237250,
+    "users_with_known_sequence": 18200
+  },
+  "cf": {
+    "eligible_events": 3091153,
+    "unknown_events": 369011,
+    "selected_events": 631939,
+    "users_with_known_sequence": 19893
+  }
+}
