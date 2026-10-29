@@ -1,0 +1,7 @@
+{
+  "subgroup_ranks": "rank every candidate first; measure positive subgroup ranks/recall in original full slate",
+  "history_seen": "present in complete training histories",
+  "candidate_seen": "present in training candidate rows, regardless of label",
+  "low_history": "limited history, not proof of a new user",
+  "no_zero_history_claim": "no natural zero-history benchmark is claimed"
+}

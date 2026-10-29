@@ -1,0 +1,24 @@
+{
+  "schema_version": 2,
+  "seed": 42,
+  "source_users": 173831,
+  "sampled_users": 20000,
+  "candidate_rows": 1781978,
+  "history_rows": 3091153,
+  "history_policy": "all preceding events; independent horizon selection occurs in neural packing",
+  "split_counts": {
+    "test": 3000,
+    "train": 14000,
+    "val": 3000
+  },
+  "split_sha256": "012cd704c2665e7b807934f5f39da79a479ab427a083d913765d618c9308f35c",
+  "candidate_metadata_coverage": 0.9954982609212908,
+  "raw_files": {
+    "user_behavior_data.txt": {
+      "bytes": 957229589
+    },
+    "product_meta_data.txt": {
+      "bytes": 4841695274
+    }
+  }
+}

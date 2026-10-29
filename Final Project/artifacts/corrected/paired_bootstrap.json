@@ -1,0 +1,35 @@
+{
+  "dual_minus_lgb": {
+    "delta": 0.00828827497745675,
+    "ci95": [
+      0.002190678014273194,
+      0.014458783305861747
+    ],
+    "positive_queries": 2965,
+    "resamples": 2000,
+    "seed": 42,
+    "interpretation": "conditional on fixed saved models; not training-seed uncertainty"
+  },
+  "dual_minus_mlp": {
+    "delta": -0.0011608994873893593,
+    "ci95": [
+      -0.0033561578411579677,
+      0.0010864216579318088
+    ],
+    "positive_queries": 2965,
+    "resamples": 2000,
+    "seed": 42,
+    "interpretation": "conditional on fixed saved models; not training-seed uncertainty"
+  },
+  "dual_minus_pooled": {
+    "delta": -0.002507744366702993,
+    "ci95": [
+      -0.004771969384633133,
+      -0.0003431903139659151
+    ],
+    "positive_queries": 2965,
+    "resamples": 2000,
+    "seed": 42,
+    "interpretation": "conditional on fixed saved models; not training-seed uncertainty"
+  }
+}
