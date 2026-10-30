@@ -10,6 +10,9 @@ Corrected results and the reviewable report narrative are generated in
 [artifacts/corrected/REPORT.md](artifacts/corrected/REPORT.md).
 The report still needs the team's contribution statement and rubric check.
 
+[Improvements to consider from the A+ reference](APLUS_REFERENCE_IMPROVEMENTS.md)
+maps the previous group's strengths to proposed next steps for our report and analysis.
+
 ## Task and protocol
 
 Supervised reranking of the provided candidate slate for held-out users. Inputs are
