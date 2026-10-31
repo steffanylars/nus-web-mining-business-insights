@@ -1,16 +1,18 @@
-# Large raw data (download from JD Cloud; see README) — never commit
-Interim Report/data/JDsearch/*.txt
-Interim Report/data/JDsearch/product_chunks/
-**/user_behavior_data.txt
-**/product_meta_data.txt
-
-# Large regenerable intermediate artifacts (rebuild with src/step2, step3)
-Final Project/artifacts/model/meta_subset.parquet
-Final Project/artifacts/model/features.parquet
-Final Project/artifacts/model/candidates.parquet
-Final Project/artifacts/model/history.parquet
-
-# OS / misc
-.DS_Store
+﻿# Python
 __pycache__/
 *.pyc
+.venv/
+
+# Data artifacts (too large for git)
+artifacts/
+processed/
+*.parquet
+
+# Generator scripts and temp files
+generate_*.py
+regen_*.py
+dump_context*.ps1
+extract_notebooks*.py
+extract_prof_notebooks*.py
+_context_dump.txt
+context_dump_no_outputs.txt
