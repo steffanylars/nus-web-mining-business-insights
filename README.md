@@ -4,6 +4,9 @@ Personalised reranking of provided JDSearch candidate slates using query terms,
 product metadata and preceding user history.
 
 On branch ethan, start with [Ethan's change log](Final%20Project/ETHAN_CHANGES.md).
+For the team's Colab notebook exchange, use the
+[review notebook](Final%20Project/notebooks/Ethan_JDSearch_Pipeline.ipynb)
+or [open it in Colab](https://colab.research.google.com/github/steffanylars/nus-web-mining-business-insights/blob/ethan/Final%20Project/notebooks/Ethan_JDSearch_Pipeline.ipynb).
 The [pipeline README](Final%20Project/README.md) contains reproduction instructions.
 Measured corrected results and the report narrative are in
 [artifacts/corrected](Final%20Project/artifacts/corrected).
