@@ -1,6 +1,15 @@
 # JDSearch corrected final-project pipeline
 
 **Start with [ETHAN_CHANGES.md](ETHAN_CHANGES.md)** for what changed and why.
+
+For teammate notebook review, use
+[Ethan_JDSearch_Pipeline.ipynb](notebooks/Ethan_JDSearch_Pipeline.ipynb)
+or [Open in Colab](https://colab.research.google.com/github/steffanylars/nus-web-mining-business-insights/blob/ethan/Final%20Project/notebooks/Ethan_JDSearch_Pipeline.ipynb).
+It contains source snapshots, explanations, saved measured results and optional run
+cells. Training is disabled by default. The review cells were checked locally;
+a fresh Colab/GPU training run has not been executed. The setup pins a known source
+revision, and new outputs are separate from the saved evidence.
+
 This branch is Ethan's proposed correction to the team draft. The original report/PDF,
 slides, model files and tables outside artifacts/corrected are historical snapshots
 and should not be submitted as results of the corrected code.
@@ -110,3 +119,7 @@ the added sequence towers. Subgroup positive ranks/recall use original full slat
 
 This is one seed on a previously inspected test partition. Do not interpret bootstrap
 intervals as training-seed variation, or offline metrics as causal business lift.
+
+To refresh the notebook after source/results changes, run
+`python "Final Project/tools/build_colab_notebook.py"` from a clean source revision.
+Review the generated source revision and tables before sharing it.
