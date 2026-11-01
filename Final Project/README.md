@@ -1,6 +1,11 @@
 # JDSearch corrected final-project pipeline
 
-**Start with [ETHAN_CHANGES.md](ETHAN_CHANGES.md)** for what changed and why.
+**Start with [ETHAN_CHANGES.md](ETHAN_CHANGES.md)** for what changed and why, then
+[STEP7_COLDSTART_DIVERSITY.md](STEP7_COLDSTART_DIVERSITY.md) for the two review fixes that were built and measured.
+
+**Submission documents (corrected numbers):** `report/BT4222_Group13_Final_Report_v2.docx|pdf` and
+`report/BT4222_Group13_Dataset_and_SourceCode_Listing_v2.docx|pdf`, both generated from the measured
+artifacts by `src/make_report_v2.py` / `src/make_listing_v2.py`. Files without `_v2` are the superseded 26 Oct draft.
 
 For teammate notebook review, use
 [Ethan_JDSearch_Pipeline.ipynb](notebooks/Ethan_JDSearch_Pipeline.ipynb)
@@ -69,7 +74,7 @@ Change the run directory for a new experiment so outputs cannot be mixed.
 Stages: 1 temporal bins; 1b daily age counts; 2 dataset and fixed split; 3 features;
 4 baselines and LambdaMART; 5 six neural variants; 6 diagnostics and feature ablation;
 7 cold-start routing and category diversification (see STEP7_COLDSTART_DIVERSITY.md);
-report measured Markdown narrative. Select a subset with --stages, for example:
+report measured Markdown narrative. `make_report_v2.py` / `make_listing_v2.py` build the submission DOCX/PDF. Select a subset with --stages, for example:
 
     python "Final Project/src/run_pipeline.py" --stages 4 5 6 report
 
