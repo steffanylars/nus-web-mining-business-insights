@@ -10,7 +10,7 @@ from config import RES,SEED,EPOCHS,HISTORY_LENGTH,prepare,save_json
 
 STAGES={'1':'step1_preprocess_temporal.py','1b':'step1b_retention_cutoffs.py',
     '2':'step2_build_dataset.py','3':'step3_features.py','4':'step4_baselines_lgbm.py',
-    '5':'step5_neural.py','6':'step6_diagnostics.py','report':'make_results_summary.py'}
+    '5':'step5_neural.py','6':'step6_diagnostics.py','7':'step7_coldstart_diversity.py','report':'make_results_summary.py'}
 
 def main():
     parser=argparse.ArgumentParser()

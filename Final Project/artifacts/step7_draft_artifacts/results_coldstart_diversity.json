@@ -1,0 +1,51 @@
+{
+  "full_model_source": "refit in step 7 (no stage-4 model found)",
+  "history_free_features": [
+    "query_len",
+    "slate_size",
+    "has_meta",
+    "ov_name",
+    "ov_cat",
+    "ov_brand",
+    "jacc_name",
+    "pop_wid",
+    "pop_cate3",
+    "pop_brand"
+  ],
+  "fallback_best_iteration": 33,
+  "routing": {
+    "selected_threshold": 1,
+    "rule": "max validation NDCG@10 (ties -> smaller threshold)",
+    "cold_test_sessions": 35,
+    "cold_test_share": 0.010523552355235524,
+    "routed_minus_full_test": {
+      "delta": -0.0005171696031131707,
+      "ci95": [
+        -0.0016476305935790656,
+        0.00042380618347505816
+      ],
+      "positive_queries": 2965
+    }
+  },
+  "diversification": {
+    "selected_lambda": 0.0,
+    "top_k": 10,
+    "rule": "largest lambda with validation NDCG@10 within 0.005 of lambda=0",
+    "category_key": "cate_id_3",
+    "unknown_metadata_bucket": "__unknown__"
+  },
+  "test_full": {
+    "NDCG@10": 0.3158882404032381,
+    "MRR@200": 0.32753963536526315,
+    "P@1": 0.20472175379426644,
+    "HR@10": 0.5838111298482294
+  },
+  "test_final": {
+    "NDCG@10": 0.3153710708001249,
+    "MRR@200": 0.3271098829456803,
+    "P@1": 0.20438448566610457,
+    "HR@10": 0.5827993254637437
+  },
+  "test_positive_queries": 2965,
+  "interpretation": "one seed; thresholds and lambda selected on validation only; bootstrap reflects query resampling for fixed models"
+}

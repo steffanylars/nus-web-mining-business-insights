@@ -13,6 +13,7 @@ from eval_utils import evaluate,lightgbm_metric
 from step4_baselines_lgbm import fold_in_svd
 from step6_diagnostics import positive_rank_records
 from step5_neural import DHAR,HistoryCF,listwise,brand_bucket,fit_preprocessing,encode_frames,pack
+from step7_coldstart_diversity import route_scores,mmr_rerank,diversify,diversity_metrics
 
 class PipelineRegression(unittest.TestCase):
     def test_actual_delimiter_and_missing_query(self):
@@ -111,6 +112,33 @@ class PipelineRegression(unittest.TestCase):
         args=[pk[k] for k in ['num','c3','bi','ii','short','order','cf']]
         torch.testing.assert_close(model(*args),duplicate(*args))
         self.assertEqual(brand_bucket('brand'),brand_bucket('brand'))
+
+    def test_coldstart_routing_switches_whole_sessions(self):
+        frame=pd.DataFrame({'session_id':[0,0,1,1,2,2],'cand_wid':list('abcdef'),
+            'full':[1.,2.,3.,4.,5.,6.],'fallback':[-1.,-2.,-3.,-4.,-5.,-6.]})
+        n_hist={0:0,1:3,2:50}
+        routed,cold=route_scores(frame,'full','fallback',n_hist,2)
+        self.assertEqual(cold.tolist(),[True,True,False,False,False,False])
+        self.assertEqual(routed.tolist(),[-1.,-2.,3.,4.,5.,6.])
+        routed,cold=route_scores(frame,'full','fallback',n_hist,-1)
+        self.assertFalse(cold.any()); self.assertEqual(routed.tolist(),frame.full.tolist())
+
+    def test_mmr_identity_at_zero_and_category_coverage_monotone(self):
+        scores=np.array([5.,4.,3.,2.,1.]); cats=np.array(['x','x','x','y','z']); tie=np.arange(5)
+        self.assertEqual(mmr_rerank(scores,cats,tie,0.0).tolist(),scores.tolist())
+        diversified=mmr_rerank(scores,cats,tie,0.5,top_k=3)
+        top3=np.argsort(-diversified)[:3].tolist()
+        self.assertEqual(top3[0],0)                      # best item is never displaced
+        self.assertEqual(len(set(cats[top3])),3)         # one per category once penalised
+        # positions beyond top_k keep relevance order
+        self.assertEqual(np.argsort(-diversified)[3:].tolist(),[i for i in [1,2,3,4] if i not in top3])
+        frame=pd.DataFrame({'session_id':[0]*5+[1]*5,'cand_wid':list('abcdefghij'),'s':np.tile(scores,2)})
+        cate={w:c for w,c in zip('abcdefghij',np.tile(cats,2))}
+        before=diversity_metrics(frame,'s',cate,top_k=3)['distinct_categories_top10']
+        frame['d']=diversify(frame,'s',cate,0.5)
+        after=diversity_metrics(frame,'d',cate,top_k=3)['distinct_categories_top10']
+        self.assertGreaterEqual(after,before)
+        self.assertEqual(before,1.0); self.assertEqual(after,3.0)
 
 if __name__=='__main__':
     unittest.main()
