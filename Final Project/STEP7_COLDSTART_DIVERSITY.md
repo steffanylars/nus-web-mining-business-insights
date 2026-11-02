@@ -12,7 +12,8 @@ Two review comments on the draft:
 2. *No category diversification is applied after relevance scoring.*
 
 Both are now implemented in `src/step7_coldstart_diversity.py`, registered as stage `7`
-in `run_pipeline.py`, with regression tests in `tests/test_pipeline.py`. Both were then
+in `run_pipeline.py`, with regression tests in `tests/test_pipeline.py`, and as the executed
+notebook `notebooks/Step7_ColdStart_Diversity.ipynb` (same code, cell by cell, outputs preserved). Both were then
 **measured, and both selection rules (validation only) chose "do not apply"**. This file
 records what was built, what the data says, and how it should be reported.
 

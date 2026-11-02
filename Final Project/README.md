@@ -73,7 +73,8 @@ Change the run directory for a new experiment so outputs cannot be mixed.
 
 Stages: 1 temporal bins; 1b daily age counts; 2 dataset and fixed split; 3 features;
 4 baselines and LambdaMART; 5 six neural variants; 6 diagnostics and feature ablation;
-7 cold-start routing and category diversification (see STEP7_COLDSTART_DIVERSITY.md);
+7 cold-start routing and category diversification (see STEP7_COLDSTART_DIVERSITY.md and
+`notebooks/Step7_ColdStart_Diversity.ipynb`, executed with outputs);
 report measured Markdown narrative. `make_report_v2.py` / `make_listing_v2.py` build the submission DOCX/PDF. Select a subset with --stages, for example:
 
     python "Final Project/src/run_pipeline.py" --stages 4 5 6 report
