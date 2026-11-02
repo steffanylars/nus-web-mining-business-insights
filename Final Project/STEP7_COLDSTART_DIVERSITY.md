@@ -1,4 +1,4 @@
-# Step 7 — Cold-start routing and category diversification
+# Step 7 - Cold-start routing and category diversification
 
 Branch: `steff-coldstart-diversity` (on top of `ethan`). Date: 1 November 2026 (Singapore).
 
@@ -7,7 +7,7 @@ Branch: `steff-coldstart-diversity` (on top of `ethan`). Date: 1 November 2026 (
 Two review comments on the draft:
 
 1. *Cold-start users / users with short history are scored by the same model as warm
-   users — they should be scored with current-query matching, metadata and training-set
+   users - they should be scored with current-query matching, metadata and training-set
    popularity instead.*
 2. *No category diversification is applied after relevance scoring.*
 
@@ -21,7 +21,7 @@ records what was built, what the data says, and how it should be reported.
 
 | Component | Implementation | Selection (validation data only) |
 |---|---|---|
-| History-free fallback ranker | LambdaMART (same `LGB_PARAMS` as stage 4) on 10 features that do not use the user's history: `query_len, slate_size, has_meta, ov_name, ov_cat, ov_brand, jacc_name, pop_wid, pop_cate3, pop_brand` | — |
+| History-free fallback ranker | LambdaMART (same `LGB_PARAMS` as stage 4) on 10 features that do not use the user's history: `query_len, slate_size, has_meta, ov_name, ov_cat, ov_brand, jacc_name, pop_wid, pop_cate3, pop_brand` | - |
 | Cold-start router | Sessions with `n_hist <= T` get the fallback score; others keep the full model's score (whole slate switches, so no cross-model calibration is needed) | `T` ∈ {never, 0, 1, 2, 3, 5, 10, 20}; max validation NDCG@10 |
 | Category diversification | Greedy MMR over the top-10: `(1-λ)·rel − λ·(#already-selected items in the same cate_id_3)`; positions beyond 10 keep relevance order; λ = 0 reproduces the relevance ranking exactly | λ ∈ {0, .05, .1, .2, .3, .5}; largest λ whose validation NDCG@10 stays within 0.005 of λ = 0 |
 | Diversity metric | Mean number of distinct level-3 categories in the top-10 (and the share of distinct categories) | reported, not optimised |
@@ -60,7 +60,7 @@ NDCG@10 on test, by history length of the user (positive queries only):
   (0.289 vs 0.309 on 63 queries). The full LambdaMART already receives `h_len`, `h_n_*`,
   `h_min_elapsed` and the affinity features, which are simply zero/absent for short histories;
   it degrades gracefully instead of needing a separate model.
-- Validation picked `T = 1` by +0.0003 NDCG@10 over "never route" — within noise — and on test
+- Validation picked `T = 1` by +0.0003 NDCG@10 over "never route" - within noise - and on test
   routing those 35 sessions **hurt** the limited group (0.309 → 0.285). Paired bootstrap of
   routed − full on all test queries: −0.0005, 95% CI [−0.0016, +0.0004].
 - There are **no zero-history users in JDSearch** (minimum `n_hist` = 1 in the sample); only 459
