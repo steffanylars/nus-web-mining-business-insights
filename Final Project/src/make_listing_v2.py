@@ -42,13 +42,13 @@ def main():
     d = Document(); st = d.styles['Normal']; st.font.name = 'Arial'; st.font.size = Pt(10.5)
     for s in d.sections:
         s.top_margin = s.bottom_margin = s.left_margin = s.right_margin = Inches(0.9)
-    d.add_heading('BT4222 Group 13 — Dataset & Source-Code Listing', 1)
+    d.add_heading('BT4222 Group 13 - Dataset & Source-Code Listing', 1)
     p = d.add_paragraph(); p.add_run('GitHub repository: ').bold = True; p.add_run(f'{REPO}  (branch: {BRANCH})')
     p = d.add_paragraph(); p.add_run('Members: ').bold = True
     p.add_run('Chow Ee Xiang (A0300297J), Ethan John Ong Jian-Hao (A0308681Y), Heng Ann Xin (A0282911E), Ku Jia Yi (A0300567J), Lara Muy Steffany Mishell (A0350365H)')
 
     d.add_heading('1. Datasets', 2)
-    d.add_paragraph('JDSearch (Liu et al., SIGIR 2023) — 173,831 users, 12.8M products, 26.7M interactions. '
+    d.add_paragraph('JDSearch (Liu et al., SIGIR 2023) - 173,831 users, 12.8M products, 26.7M interactions. '
                     'Source and download (JD Cloud): https://github.com/rucliujn/JDsearch · paper https://doi.org/10.1145/3539618.3591900. '
                     'Raw files are not redistributed (licence and size): user_behavior_data.txt (957 MB) and product_meta_data.txt (4.8 GB). '
                     'Set JD_USER_TXT / JD_PRODUCT_TXT or place them in Final Project/data/.')

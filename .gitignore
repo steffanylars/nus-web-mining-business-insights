@@ -1,4 +1,4 @@
-# Large raw data (download from JD Cloud; see README) — never commit
+# Large raw data (download from JD Cloud; see README) - never commit
 Interim Report/data/JDsearch/*.txt
 Interim Report/data/JDsearch/product_chunks/
 **/user_behavior_data.txt

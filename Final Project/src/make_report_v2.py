@@ -119,10 +119,10 @@ def build():
     cov = D['manifest']['candidate_metadata_coverage']
 
     # ---------------- cover ----------------
-    for txt, size, bold in [('BT4222 — Mining Web Data for Business Insights', 14, True),
+    for txt, size, bold in [('BT4222 - Mining Web Data for Business Insights', 14, True),
                             ('Final Project Report', 13, False), ('', 11, False),
                             ('Personalised Product Search on JDSearch:', 18, True),
-                            ('What a Log-Retention Window Teaches a Re-Ranker — and What Attention Does Not Add', 15, True),
+                            ('What a Log-Retention Window Teaches a Re-Ranker - and What Attention Does Not Add', 15, True),
                             ('', 11, False), ('Group No. 13', 13, True),
                             ('National University of Singapore  |  Professor Wang Qiuhong', 11, False), ('', 11, False)]:
         para = d.add_paragraph(); para.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -146,8 +146,8 @@ def build():
           f"user-ID embeddings cannot transfer to held-out users. A history-conditioned CF adaptation reaches NDCG@10 {f4(cf['NDCG@10'])}, "
           f"below the popularity prior ({f4(pop['NDCG@10'])}); the draft's user-ID NCF (0.086) was a protocol artefact, not proof that CF fails.",
           'Prior baseline & critical diagnosis.')
-    doc.p(f"Tracing history back in time on all 26.7M events reveals a telescoping log-retention window — clicks survive ~7 days, "
-          f"carts ~90 days, orders ≥1 year — so interaction type is confounded with recency. We engineer horizon-aware features "
+    doc.p(f"Tracing history back in time on all 26.7M events reveals a telescoping log-retention window - clicks survive ~7 days, "
+          f"carts ~90 days, orders ≥1 year - so interaction type is confounded with recency. We engineer horizon-aware features "
           f"(short-term intent vs long-term preference) that lift LambdaMART from {f4(abl['no_temporal']['NDCG@10'])} to "
           f"{f4(abl['full']['NDCG@10'])} NDCG@10 (+{abl['delta_NDCG10']:.3f}). We then build a Dual-Horizon Attention Ranker (DHAR) and, "
           f"critically, a matched set of ablations.", 'Group contributions & modelling highlights.')
@@ -160,7 +160,7 @@ def build():
     doc.page_break()
 
     # ---------------- Section 1 ----------------
-    doc.h('Section 1 — Data Understanding & Feature Engineering')
+    doc.h('Section 1 - Data Understanding & Feature Engineering')
     doc.p("This section reports what changed since the interim report. Dataset overview, slate sizes, sparsity and the feature "
           "dictionary were established there and are not repeated.")
     doc.h('1.1 The decisive finding: a telescoping log-retention window', 2)
@@ -203,7 +203,7 @@ def build():
     doc.page_break()
 
     # ---------------- Section 2 ----------------
-    doc.h('Section 2 — Models and Performance')
+    doc.h('Section 2 - Models and Performance')
     doc.h('2.1 Task set-up, splits and metrics', 2)
     doc.p(f"Each record is one query with its candidate slate and ordinal labels, so the task is slate re-ranking: negatives are already "
           f"in the slate (97.9% label 0), and catalogue-wide negative sampling is unnecessary. We sample 20,000 users (seed 42; "
@@ -216,10 +216,10 @@ def build():
     doc.bullets([
         ('Random / Popularity / Content-only:', 'floor, non-personalised log-popularity prior, and query↔candidate token overlap.'),
         ('SVD (train-only fold-in):', '64-factor TruncatedSVD on training user×item histories; held-out users are folded into fixed item factors (no shared fitting on test users).'),
-        ('History-conditioned CF:', 'GMF+MLP adaptation of NCF in which a pooled encoder of the user\'s preceding items replaces the user-ID embedding, so held-out users can be represented. The draft\'s user-ID NCF left test users with untrained embeddings and scored at random — a protocol failure we report, not a result.'),
+        ('History-conditioned CF:', 'GMF+MLP adaptation of NCF in which a pooled encoder of the user\'s preceding items replaces the user-ID embedding, so held-out users can be represented. The draft\'s user-ID NCF left test users with untrained embeddings and scored at random - a protocol failure we report, not a result.'),
         ('LambdaMART:', 'LightGBM lambdarank over all engineered features, label gains [0,1,3,7], validation NDCG@10 with the same positive-query policy as final evaluation.'),
         ('MLP (no towers):', 'candidate category/brand embeddings + engineered features → MLP, trained listwise (softmax cross-entropy with ordinal gains) per slate. This is the control that isolates what attention adds.'),
-        ('DHAR — Dual-Horizon Attention Ranker:', 'the MLP plus two attention towers in which the candidate\'s category/brand embedding attends separately over the user\'s short-horizon category sequence (clicks ≤7 d, carts ≤90 d) and order-horizon sequence (all preceding orders), each sampled to 20 known-category positions across its full span. Matched variants: pooled history (mean instead of attention), short-only and order-only towers.')])
+        ('DHAR - Dual-Horizon Attention Ranker:', 'the MLP plus two attention towers in which the candidate\'s category/brand embedding attends separately over the user\'s short-horizon category sequence (clicks ≤7 d, carts ≤90 d) and order-horizon sequence (all preceding orders), each sampled to 20 known-category positions across its full span. Matched variants: pooled history (mean instead of attention), short-only and order-only towers.')])
     doc.fig(FIG / 'fig_dhar_architecture.png', 'Figure 3. DHAR: two retention horizons → two candidate-category attention towers → listwise ordinal ranking. The MLP control removes both towers.')
     doc.h('2.3 Results', 2)
     doc.table(['Model', 'NDCG@10', 'MRR@200', 'P@1', 'HR@10'],
@@ -238,8 +238,8 @@ def build():
     doc.table(['Model', 'Train NDCG@10', 'Val NDCG@10', 'Test NDCG@10', 'Train−Test gap'],
               [['Popularity', f4(base['Popularity_train']['NDCG@10']), f4(base['Popularity_val']['NDCG@10']), f4(pop['NDCG@10']), f4(base['Popularity_train']['NDCG@10']-pop['NDCG@10'])],
                ['LambdaMART', f4(lgb_tr['NDCG@10']), f4(lgb_v['NDCG@10']), f4(lgb_t['NDCG@10']), f4(lgb_tr['NDCG@10']-lgb_t['NDCG@10'])],
-               ['MLP (no towers)', '—', f4(neu['MLP(no towers)_val']['NDCG@10']), f4(mlp['NDCG@10']), '—'],
-               ['DHAR', '—', f4(neu['DHAR(ours)_val']['NDCG@10']), f4(dual['NDCG@10']), '—']],
+               ['MLP (no towers)', '-', f4(neu['MLP(no towers)_val']['NDCG@10']), f4(mlp['NDCG@10']), '-'],
+               ['DHAR', '-', f4(neu['DHAR(ours)_val']['NDCG@10']), f4(dual['NDCG@10']), '-']],
               widths=[1.8, 1.2, 1.2, 1.2, 1.3])
     doc.p("LambdaMART memorises popularity/ID-like features (gap 0.093); the neural rankers are selected by validation early stopping "
           "(DHAR: best epoch 2 of 5) and their validation→test change is within 0.004. Training-set NDCG is not computed for the neural "
@@ -247,7 +247,7 @@ def build():
     doc.page_break()
 
     # ---------------- Section 3 ----------------
-    doc.h('Section 3 — Contribution and Justification')
+    doc.h('Section 3 - Contribution and Justification')
     doc.h('3.1 Self-Evaluation Table', 2)
     doc.table(['Contribution aspect', 'Effort', 'Effectiveness', 'Evidence'],
               [['1. Data understanding, rich-signal use & feature engineering', 'Optional', 'Optional', f'Full-data temporal retention analysis (§1.1); horizon features worth +{abl["delta_NDCG10"]:.3f} NDCG@10 in a matched ablation (§3.2)'],
@@ -265,12 +265,12 @@ def build():
           f"also material: the same model family moved from 0.313 (draft) to {f4(lgb_t['NDCG@10'])} once features measured what they claimed to.")
     doc.h('3.3 Baseline benchmarking & gap diagnosis (Aspect 2)', 2)
     doc.p(f"The draft reported user-ID NCF at NDCG@10 0.086 ≈ random and concluded that collaborative filtering fails on JDSearch. "
-          f"Auditing the protocol showed held-out users received untrained ID embeddings — the number measured a bug. A history-conditioned "
+          f"Auditing the protocol showed held-out users received untrained ID embeddings - the number measured a bug. A history-conditioned "
           f"adaptation that represents users by their preceding items reaches {f4(cf['NDCG@10'])}, and training-only SVD with fold-in "
           f"{f4(svd['NDCG@10'])}: real signal, but below the popularity prior ({f4(pop['NDCG@10'])}). The structural reason survives the fix: "
           f"positives absent from all training histories reach the top-10 in only {cold_r:.0%} of queries (median full-slate rank {cold_med}) "
           f"versus {warm_r:.0%} (median rank {warm_med}) for items seen in training. New-query generalisation under massive item cold-start is "
-          f"what content/affinity features target — and it bounds every model, including ours.")
+          f"what content/affinity features target - and it bounds every model, including ours.")
     doc.h('3.4 Architecture result, diagnostics & business insight (Aspects 3–4)', 2)
     doc.p(f"DHAR was designed to materialise the two-horizon finding. Under matched training it scores {f4(dual['NDCG@10'])} versus "
           f"{f4(mlp['NDCG@10'])} for the same model without towers (Δ = {dmm['delta']:+.4f}, CI [{dmm['ci95'][0]:+.4f}, {dmm['ci95'][1]:+.4f}]); "
@@ -278,11 +278,11 @@ def build():
           f"engineered aggregate features (hit flags, decayed affinities, counts), and with anonymised category IDs and 20-position sequences "
           f"the attention towers have little left to learn. We therefore present the feature-based listwise MLP as the primary model and "
           f"report the architecture study as a negative result. DHAR does beat LambdaMART (Δ = {dml['delta']:+.4f}, CI "
-          f"[{dml['ci95'][0]:+.4f}, {dml['ci95'][1]:+.4f}]), but so does the MLP — the gain is listwise neural training on the features, not attention.", 'Why the towers did not help.')
+          f"[{dml['ci95'][0]:+.4f}, {dml['ci95'][1]:+.4f}]), but so does the MLP - the gain is listwise neural training on the features, not attention.", 'Why the towers did not help.')
     seg = D['seg'].query("model=='mlp'").set_index('history_group')
     doc.p(f"MLP NDCG@10 by history length: limited (0–2 events) {f4(seg.loc['limited(0-2)','NDCG@10'])} (63 queries), short "
           f"{f4(seg.loc['short(3-20)','NDCG@10'])}, medium {f4(seg.loc['medium(21-100)','NDCG@10'])}, long (>100) "
-          f"{f4(seg.loc['long(>100)','NDCG@10'])}. There is no degradation for short-history users — the ranker conditions on history length "
+          f"{f4(seg.loc['long(>100)','NDCG@10'])}. There is no degradation for short-history users - the ranker conditions on history length "
           f"and degrades gracefully. Median full-slate rank of positives by outcome: purchase {int(rk[3])}, cart {int(rk[2])}, click "
           f"{int(rk[1])}. The model is most confident where business value is highest; with purchase-weighted gains this is partly by "
           f"construction, so we report it as descriptive, not causal.", 'Segments and rank by type.')
@@ -297,8 +297,8 @@ def build():
         div = D['s7div']; d0 = div[div.lam == 0].iloc[0]; d5 = div[div.lam == 0.05].iloc[0]
         doc.p(f"Review feedback proposed (a) scoring short-history users with a history-free model (query match, metadata, training "
               f"popularity) and (b) diversifying categories after relevance scoring. We implemented both as pipeline stage 7 with "
-              f"validation-based selection. (a) The history-free LambdaMART is worse than the full model in every history segment — "
-              f"for 1–2-event users {f4(sseg.loc['limited(1-2)','fallback_history_free'])} vs {f4(sseg.loc['limited(1-2)','full'])} — and "
+              f"validation-based selection. (a) The history-free LambdaMART is worse than the full model in every history segment - "
+              f"for 1–2-event users {f4(sseg.loc['limited(1-2)','fallback_history_free'])} vs {f4(sseg.loc['limited(1-2)','full'])} - and "
               f"JDSearch has no zero-history users (minimum one event; 459 of 20,000 users have ≤2). Routing the {s7['routing']['cold_test_sessions']} "
               f"coldest test sessions changes overall NDCG@10 by {s7['routing']['routed_minus_full_test']['delta']:+.4f} (CI "
               f"[{s7['routing']['routed_minus_full_test']['ci95'][0]:+.4f}, {s7['routing']['routed_minus_full_test']['ci95'][1]:+.4f}]). The cold-start "
@@ -319,13 +319,13 @@ def build():
     doc.page_break()
 
     # ---------------- Section 4 ----------------
-    doc.h('Section 4 — AI Interaction Log (Appendix)')
+    doc.h('Section 4 - AI Interaction Log (Appendix)')
     doc.p("AI tools (Claude) were used as a sparring partner, debugger and auditor. Routine syntax prompts are omitted. Every "
           "suggestion was verified against the data before adoption; several were measured and rejected.")
     doc.table(['Core prompt / objective', 'AI output summary', 'Our critical evaluation', 'Refinement & final action'],
               [['Why do carts/orders outnumber clicks, and what does tracing history back in time reveal?', 'Suggested converting interval seconds to elapsed days and cross-tabulating type vs age.', 'Correct direction but could not know JD\'s retention policy; risk of over-reading medians.', 'Computed suffix-sum elapsed days on all 26.7M events; found 7 d / 90 d / ~1 yr cut-offs at 1-day resolution.'],
-               ['How should ordinal labels 0/1/2/3 be handled for ranking?', 'Proposed cumulative-link ordinal regression and listwise losses with label gains.', 'Cumulative-link assumes pure intensity ordering — but §1 shows type≈recency confound.', 'Adopted listwise softmax with ordinal gains [0,1,3,7]; avoided type-as-intensity weighting.'],
-               ['Our content-only baseline scored NDCG 0.97 — is that right?', 'Flagged tie-breaking/position leakage given the 98.8% first-position positive.', 'Matched the interim\'s own warning; a stable sort was leaking candidate order.', 'Deterministic ID-based tie keys in evaluation; honest score 0.095.'],
+               ['How should ordinal labels 0/1/2/3 be handled for ranking?', 'Proposed cumulative-link ordinal regression and listwise losses with label gains.', 'Cumulative-link assumes pure intensity ordering - but §1 shows type≈recency confound.', 'Adopted listwise softmax with ordinal gains [0,1,3,7]; avoided type-as-intensity weighting.'],
+               ['Our content-only baseline scored NDCG 0.97 - is that right?', 'Flagged tie-breaking/position leakage given the 98.8% first-position positive.', 'Matched the interim\'s own warning; a stable sort was leaking candidate order.', 'Deterministic ID-based tie keys in evaluation; honest score 0.095.'],
                ['Design an architecture that uses the retention finding.', 'Suggested a two-tower / dual-horizon encoder with attention over history.', 'Generic; needed category-level attention and a matched no-tower control to be a fair test.', 'Implemented DHAR plus MLP/pooled/single-tower controls; attention showed no gain (§2.3).'],
                ['Audit the draft pipeline end to end.', 'Found the wrong term delimiter, the 60-event history cap crowding out old orders, untrained user-ID embeddings for held-out users in NCF, and an ablation with a different boosting budget.', 'Each finding was reproduced with a regression test before any code changed; the NCF finding invalidated a headline claim of the draft.', 'Corrected pipeline, matched ablations, tests; "CF collapses" replaced by the item cold-start diagnosis (§3.3).'],
                ['Short-history users should get a history-free scorer; add category diversification.', 'Proposed a popularity/metadata fallback router and MMR over categories.', 'Plausible, but JDSearch has no zero-history users and the ranker already conditions on history length; diversification should be priced, not assumed.', 'Built both as stage 7 with validation selection; both measured worse and rejected, trade-off reported (§3.5).'],
@@ -333,7 +333,7 @@ def build():
               widths=[1.5, 1.6, 1.7, 1.7])
 
     # ---------------- Section 5 ----------------
-    doc.h('Section 5 — References')
+    doc.h('Section 5 - References')
     for ref in ["Liu, J., Dou, Z., Tang, G., & Xu, S. (2023). JDsearch: A Personalized Product Search Dataset with Real Queries and Full Interactions. SIGIR 2023, 2945–2952. https://doi.org/10.1145/3539618.3591900",
                 "JDsearch dataset repository and format (U+0018 term delimiter). https://github.com/rucliujn/JDsearch",
                 "He, X., Liao, L., Zhang, H., Nie, L., Hu, X., & Chua, T.-S. (2017). Neural Collaborative Filtering. WWW 2017. (Our history-conditioned baseline is an adaptation, not a reproduction.)",
