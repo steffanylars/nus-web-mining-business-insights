@@ -68,7 +68,8 @@ def main():
         raise ValueError('Raw metadata requires names as well as IDs')
     for name,frame in [('candidates',cand),('history',hist),('sessions',sess),('meta_subset',meta)]:
         frame.to_parquet(OUT/f'{name}.parquet', index=False)
-    membership = sess[['session_id','source_row_id','split']].to_csv(index=False)
+    # CRLF is fixed on purpose: pandas would otherwise use the OS line ending and the hash would differ by platform.
+    membership = sess[['session_id','source_row_id','split']].to_csv(index=False, lineterminator='\r\n')
     save_json(RES/'dataset_manifest.json', dict(schema_version=SCHEMA_VERSION, seed=SEED,
         source_users=n_rows, sampled_users=len(sess), candidate_rows=len(cand), history_rows=len(hist),
         history_policy='all preceding events; independent horizon selection occurs in neural packing',
