@@ -7,6 +7,8 @@ On branch ethan, start with [Ethan's change log](Final%20Project/ETHAN_CHANGES.m
 For the team's Colab notebook exchange, use the
 [review notebook](Final%20Project/notebooks/Ethan_JDSearch_Pipeline.ipynb)
 or [open it in Colab](https://colab.research.google.com/github/steffanylars/nus-web-mining-business-insights/blob/ethan/Final%20Project/notebooks/Ethan_JDSearch_Pipeline.ipynb).
+The seven step notebooks (`Final Project/notebooks/Step1_...` to `Step7_...`) explain each pipeline stage cell by cell,
+see the [notebooks README](Final%20Project/notebooks/README.md).
 The [pipeline README](Final%20Project/README.md) contains reproduction instructions.
 Measured corrected results and the report narrative are in
 [artifacts/corrected](Final%20Project/artifacts/corrected).

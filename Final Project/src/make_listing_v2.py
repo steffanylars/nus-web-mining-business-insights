@@ -29,6 +29,8 @@ STRUCTURE = [
     ('Final Project/src/step7_coldstart_diversity.py', 'History-free fallback router and category MMR re-ranker, validation-selected; trade-off tables.'),
     ('Final Project/src/run_pipeline.py, make_results_summary.py, make_report_v2.py, make_listing_v2.py', 'One-command runner with run_status.json; report/listing generated from measured JSON so numbers cannot drift.'),
     ('Final Project/tests/test_pipeline.py', '11 regression tests for the audited failure modes.'),
+    ('Final Project/tests/test_notebooks.py', 'Checks that the step notebooks are valid, contain no long dashes and match the scripts line by line.'),
+    ('Final Project/notebooks/Step1_Temporal_Analysis.ipynb to Step7_ColdStart_Diversity.ipynb', 'One explained notebook per pipeline stage (Part A rebuilds the step, Part B re-checks the measured outputs); README.md in the folder explains how to run them in Colab.'),
     ('Final Project/notebooks/Ethan_JDSearch_Pipeline.ipynb', 'Colab walkthrough of the pipeline with saved measured results (Open-in-Colab link in README).'),
     ('Final Project/artifacts/corrected/', 'Measured outputs of the corrected run: results_*.json, ablation.json, paired_bootstrap.json, segment_metrics.csv, rank_by_type.csv, positive_subgroup_full_slate.csv, figures/, model/ (LightGBM model, test predictions, sessions).'),
     ('Final Project/artifacts/step7_draft_artifacts/', 'Measured outputs of stage 7 (cold-start segments, threshold selection, diversity trade-off, figure).'),

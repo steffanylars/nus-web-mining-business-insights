@@ -7,6 +7,10 @@
 `report/BT4222_Group13_Dataset_and_SourceCode_Listing_v2.docx|pdf`, both generated from the measured
 artifacts by `src/make_report_v2.py` / `src/make_listing_v2.py`. Files without `_v2` are the superseded 26 Oct draft.
 
+**Step notebooks:** one explained notebook per pipeline stage, `notebooks/Step1_Temporal_Analysis.ipynb` to
+`notebooks/Step7_ColdStart_Diversity.ipynb` (see [notebooks/README.md](notebooks/README.md)). Their code is cut from
+`src/` and kept in sync by `tests/test_notebooks.py`.
+
 For teammate notebook review, use
 [Ethan_JDSearch_Pipeline.ipynb](notebooks/Ethan_JDSearch_Pipeline.ipynb)
 or [Open in Colab](https://colab.research.google.com/github/steffanylars/nus-web-mining-business-insights/blob/ethan/Final%20Project/notebooks/Ethan_JDSearch_Pipeline.ipynb).

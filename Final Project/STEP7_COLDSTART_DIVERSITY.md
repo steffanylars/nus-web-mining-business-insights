@@ -13,7 +13,7 @@ Two review comments on the draft:
 
 Both are now implemented in `src/step7_coldstart_diversity.py`, registered as stage `7`
 in `run_pipeline.py`, with regression tests in `tests/test_pipeline.py`, and as the executed
-notebook `notebooks/Step7_ColdStart_Diversity.ipynb` (same code, cell by cell, outputs preserved). Both were then
+notebook `notebooks/Step7_ColdStart_Diversity.ipynb` (the same code, cell by cell, with explanations and outputs preserved). Both were then
 **measured, and both selection rules (validation only) chose "do not apply"**. This file
 records what was built, what the data says, and how it should be reported.
 
