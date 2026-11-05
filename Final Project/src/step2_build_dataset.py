@@ -47,8 +47,8 @@ def main():
     if n_users < 10:
         raise ValueError('Use at least 10 users for a three-way split')
     with SRC_USER.open('rb') as f:
-        n_rows = sum(1 for _ in f)-1
-    idx = np.sort(np.random.default_rng(SEED).choice(n_rows, min(n_rows,n_users), replace=False))
+        n_rows = sum(1 for _ in f) - 1
+    idx = np.sort(np.random.default_rng(SEED).choice(n_rows, min(n_rows, n_users), replace=False))
     with SRC_USER.open(encoding='utf-8', newline='') as f:
         cand,hist,sess = build_records(csv.DictReader(f, delimiter='\t'), idx.tolist())
     print(f'Built {len(sess):,} users; {len(hist):,} complete history events', flush=True)

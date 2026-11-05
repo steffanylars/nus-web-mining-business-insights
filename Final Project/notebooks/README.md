@@ -14,8 +14,6 @@ cell is cut from the matching script in `src/`, so the notebook and the script c
 | 6 | `Step6_Diagnostics.ipynb` | `step6_diagnostics.py` | no, Steps 2 to 5 outputs | `segment_metrics.csv`, `paired_bootstrap.json`, `ablation.json`, ... |
 | 7 | `Step7_ColdStart_Diversity.ipynb` | `step7_coldstart_diversity.py` | no, Steps 2 to 4 outputs | `results_coldstart_diversity.json`, `diversity_tradeoff.csv`, ... |
 
-`Ethan_JDSearch_Pipeline.ipynb` is the earlier single-notebook walkthrough of the whole corrected run.
-
 ## How each notebook is organised
 
 * **Part A** rebuilds the step (the same code as the script, split into explained cells).
@@ -27,7 +25,7 @@ cell is cut from the matching script in `src/`, so the notebook and the script c
 
 ## Running
 
-* **Colab.** Open a notebook, set `BRANCH` in the first cell, and set `MOUNT_DRIVE = True` if the raw files are on
+* **Colab.** Open a notebook, `BRANCH` in the first cell is already `main`, and set `MOUNT_DRIVE = True` if the raw files are on
   Google Drive (default folder `MyDrive/JDsearch/`). Outputs then go to Drive, so the next step finds them.
   Run Steps 1 to 7 in order to regenerate everything and keep the outputs in the notebooks.
 * **Locally.** Set `JD_USER_TXT`, `JD_PRODUCT_TXT` and a new `JD_RUN_DIR` (so the committed evidence in

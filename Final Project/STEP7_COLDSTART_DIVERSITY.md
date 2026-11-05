@@ -109,7 +109,7 @@ NDCG@10, which is a merchandising choice rather than a ranking improvement."
 | `is_queryless_heavy` feature | `h_queryless` already exists as a continuous feature; a binary cut adds nothing a tree ranker cannot learn |
 | Subword embeddings for item names | Not applicable: JDSearch names are anonymised term IDs, so there are no characters/subwords to share between items |
 | Hard negative sampling | Not applicable: training is listwise softmax over each slate, which already weights the highest-scoring negatives most |
-| Dual-horizon attention | Implemented in the draft; the matched comparison on `ethan` shows no gain over the same-feature MLP (see `ETHAN_CHANGES.md`) |
+| Dual-horizon attention | Implemented in the draft; the matched comparison shows no gain over the same-feature MLP (`artifacts/corrected/paired_bootstrap.json`) |
 
 ## Checks
 
