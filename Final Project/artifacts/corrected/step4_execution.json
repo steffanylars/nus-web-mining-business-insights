@@ -1,0 +1,28 @@
+{
+  "base_commit": "48ad36bdaf06ea305855eebbb91c79b056434bee",
+  "execution": "Local Windows CPU, fresh Step 4 training and evaluation. Upstream stages not rerun.",
+  "inputs": {
+    "features.parquet": {
+      "bytes": 25056327,
+      "sha256": "694dc40bbf1e020b9bb2a5a21a5621516ac016eb3e16e7fcba1cf5d0c264ccf5"
+    },
+    "history.parquet": {
+      "bytes": 53623574,
+      "sha256": "db935666a23003d0fea2abea460cdd645435bd78a2b8ea19e2660241ac5b0e30"
+    },
+    "sessions.parquet": {
+      "bytes": 658505,
+      "sha256": "be2a3b2892703410849913f7ab699a9d049d21f7c5f604169a374b0a277cda25"
+    }
+  },
+  "versions": {
+    "numpy": "2.5.4",
+    "pandas": "3.0.1",
+    "pyarrow": "26.0.1",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "joblib": "1.6.0"
+  },
+  "finished_utc": "2026-11-06T17:28:54.484898+00:00"
+}

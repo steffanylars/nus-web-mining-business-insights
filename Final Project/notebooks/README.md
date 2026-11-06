@@ -36,7 +36,8 @@ cell is cut from the matching script in `src/`, so the notebook and the script c
 | Step | Saved outputs come from |
 |---|---|
 | 1 | A run on the full raw file (173,831 users) by the teammate who wrote it |
-| 2 to 6 | Part B executed on the committed corrected-run artifacts. Part A is **not executed** in this copy (it needs the raw files); run it once in Colab to keep its outputs as well |
+| 2, 3, 5, 6 | Part B executed on the committed corrected-run artifacts. Part A is **not executed** in this copy (it needs the raw files); run it once in Colab to keep its outputs as well |
+| 4 | Part A executed locally on Windows CPU on 7 November 2026 using the prior corrected Step 2/3 tables. All five rankers have train, validation and test metrics; all 15 combinations were checked against saved candidate predictions. This is not Colab execution. Input hashes and versions are in `artifacts/corrected/step4_execution.json`. The new train/validation candidate predictions remain local; when unavailable, Part B explicitly skips their recomputation while still showing saved split metrics. |
 | 7 | Part A executed on the 26 October **draft** tables (same 20,000 users and split as the corrected run, verified by session id); the corrected `features.parquet` is not committed. Rerun after Steps 2 to 4 |
 
 ## Notes from building these notebooks

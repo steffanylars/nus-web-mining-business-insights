@@ -20,6 +20,18 @@
       "queries_with_positive": 2965,
       "all_queries": 3000
     },
+    "Random_train": {
+      "queries_with_positive": 13832,
+      "all_queries": 14000
+    },
+    "Content/Relevance-only_train": {
+      "queries_with_positive": 13832,
+      "all_queries": 14000
+    },
+    "SVD(train-only fold-in)_train": {
+      "queries_with_positive": 13832,
+      "all_queries": 14000
+    },
     "LambdaMART(features)_train": {
       "queries_with_positive": 13832,
       "all_queries": 14000
@@ -27,6 +39,18 @@
     "Popularity_train": {
       "queries_with_positive": 13832,
       "all_queries": 14000
+    },
+    "Random_val": {
+      "queries_with_positive": 2967,
+      "all_queries": 3000
+    },
+    "Content/Relevance-only_val": {
+      "queries_with_positive": 2967,
+      "all_queries": 3000
+    },
+    "SVD(train-only fold-in)_val": {
+      "queries_with_positive": 2967,
+      "all_queries": 3000
     },
     "LambdaMART(features)_val": {
       "queries_with_positive": 2967,

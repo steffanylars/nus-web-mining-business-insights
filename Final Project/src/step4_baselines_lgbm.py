@@ -39,36 +39,46 @@ def fold_in_svd(hist, train_ids, n_sessions, dimensions=64):
     svd.fit(matrix[sorted(train_ids)])
     return items,svd,svd.transform(matrix)
 
+def reference_scores(frame):
+    """Label-free reference scores, identical on train, validation and test."""
+    frame = frame.copy()
+    frame['random_score'] = tie_keys(frame,SEED+1).astype(float)/np.iinfo(np.uint64).max
+    frame['content_score'] = frame.ov_name+frame.ov_cat+.5*frame.ov_brand+frame.jacc_name
+    return frame
+
+def score_svd(frame, items, user_factors, factors, block_size=20000):
+    """Score with the same fitted factors; unknown items receive zero."""
+    mapped = frame.cand_wid.map(items)
+    warm = mapped.notna().to_numpy()
+    ids = mapped.fillna(0).astype(int).to_numpy()
+    sids = frame.session_id.to_numpy()
+    scores = np.zeros(len(frame),dtype=np.float32)
+    for a in range(0,len(frame),block_size):
+        b = min(a+block_size,len(frame)); ok = warm[a:b]
+        block = np.zeros(b-a,dtype=np.float32)
+        block[ok] = np.einsum('ij,ij->i',user_factors[sids[a:b][ok]],factors[ids[a:b][ok]])
+        scores[a:b] = block
+    return scores
+
 def main():
     prepare(); start=time.time()
     feat=pd.read_parquet(OUT/'features.parquet')
     hist=pd.read_parquet(OUT/'history.parquet')
     sess=pd.read_parquet(OUT/'sessions.parquet')
-    test=feat[feat.split=='test'].copy()
+    test=reference_scores(feat[feat.split=='test'])
     results={}; detail={}
     def report(name,df,col):
         m,n=evaluate(df,col); results[name]=m
         detail[name]={'queries_with_positive':n,'all_queries':int(df.session_id.nunique())}
         print(name,m,flush=True)
-    test['random_score']=tie_keys(test,SEED+1).astype(float)/np.iinfo(np.uint64).max
-    test['content_score']=test.ov_name+test.ov_cat+.5*test.ov_brand+test.jacc_name
     report('Random',test,'random_score')
     report('Popularity',test,'pop_wid')
     report('Content/Relevance-only',test,'content_score')
     train_ids=set(sess.loc[sess.split=='train','session_id'])
     items,svd,user_factors=fold_in_svd(hist,train_ids,int(sess.session_id.max())+1)
     factors=svd.components_.T
-    mapped=test.cand_wid.map(items)
-    scores=np.zeros(len(test),dtype=np.float32); warm=mapped.notna().to_numpy()
-    ids=mapped.fillna(0).astype(int).to_numpy()
-    # Bounded temporary arrays avoid duplicating a whole candidate x factor matrix.
-    sids=test.session_id.to_numpy()
-    for a in range(0,len(test),20000):
-        b=min(a+20000,len(test)); ok=warm[a:b]
-        block=np.zeros(b-a,dtype=np.float32)
-        block[ok]=np.einsum('ij,ij->i',user_factors[sids[a:b][ok]],factors[ids[a:b][ok]])
-        scores[a:b]=block
-    test['svd_score']=scores
+    warm=test.cand_wid.map(items).notna().to_numpy()
+    test['svd_score']=score_svd(test,items,user_factors,factors)
     report('SVD(train-only fold-in)',test,'svd_score')
     joblib.dump({'svd':svd,'item_ids':items},OUT/'svd.joblib',compress=3)
     columns=feature_columns(feat)
@@ -76,10 +86,16 @@ def main():
     test['lgb_score']=booster.predict(test[columns])
     report('LambdaMART(features)',test,'lgb_score')
     for split in ['train','val']:
-        frame=feat[feat.split==split].copy()
+        frame=reference_scores(feat[feat.split==split])
+        frame['svd_score']=score_svd(frame,items,user_factors,factors)
         frame['lgb_score']=booster.predict(frame[columns])
+        report(f'Random_{split}',frame,'random_score')
+        report(f'Content/Relevance-only_{split}',frame,'content_score')
+        report(f'SVD(train-only fold-in)_{split}',frame,'svd_score')
         report(f'LambdaMART(features)_{split}',frame,'lgb_score')
         report(f'Popularity_{split}',frame,'pop_wid')
+        frame[['session_id','cand_wid','label','lgb_score','svd_score','random_score',
+               'content_score','pop_wid']].to_parquet(OUT/f'{split}_pred_lgb.parquet',index=False)
     pd.DataFrame({'feature':columns,'gain':booster.feature_importance('gain')}).sort_values(
         'gain',ascending=False).to_csv(RES/'lgb_feature_importance.csv',index=False)
     booster.save_model(str(OUT/'lgb_model.txt'))
