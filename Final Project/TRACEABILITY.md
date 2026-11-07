@@ -34,7 +34,7 @@ recompute it. NDCG@10 values are the TEST split unless noted. Checked against `a
 | Temporal: carts extend to ~90 days+ | rare carts to >=365d | `retention_cutoffs.txt` (CART) | Step 1 |
 | Temporal: orders up to a year | no orders >=365d | `retention_cutoffs.txt`, `temporal_type_by_daybin.csv` (ORD) | Step 1 |
 | DHAR attention mass by age/type per tower | short: 0 mass >90d, cart-leaning; order: 0.58 mass >90d | `diagnostics/dhar_attention_by_age_type.csv` | Step 6, attention cell (`dhar_attention.py`) |
-| Seed sensitivity (DHAR vs MLP) | DHAR 0.3731 (sd 0.0018), MLP 0.3749 (sd 0.0018); gap flips sign across seeds | `diagnostics/multiseed_summary.csv` | Step 5, multi-seed cell (`multiseed.py`) |
+| Seed sensitivity (DHAR vs MLP) | DHAR 0.3735 (sd 0.0013), MLP 0.3750 (sd 0.0015); per-seed DHAR - MLP +0.0012 / -0.0018 / -0.0037, so the gap flips sign | `diagnostics/multiseed_summary.csv` | Step 5, multi-seed cell (`multiseed.py`) |
 | 459 of 20,000 users have <=2 events | 459 | Step2_Build_Dataset.ipynb output (`sessions with n_hist == 0: 0 \| n_hist <= 2: 459`) | Step 2, Part A user-history summary |
 
 All 30 reported values are traceable to a committed file and OK.

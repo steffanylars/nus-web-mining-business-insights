@@ -46,7 +46,7 @@ All 7 notebooks, **Part A and Part B**, were executed on a MacBook Pro (Apple M4
 LambdaMART reproduce the `artifacts/corrected` NDCG@10 values exactly (train, validation and test); SVD
 matches to within 2e-5 NDCG@10 (nondeterministic randomized SVD), rounding to the same reported figure.
 Neural test NDCG@10 differs by up to 0.0034 (Apple MPS is not bitwise deterministic), and the seed-43/44
-multi-seed values vary by about one sd (0.0018); the report still uses the figures in `artifacts/corrected`.
+multi-seed values vary by about one sd; the report uses the figures in `artifacts/corrected` for the main results and the committed `artifacts/diagnostics/multiseed_summary.csv` for the seed check.
 Step 5 also runs the multi-seed check (`multiseed.py`) and Step 6 the DHAR attention analysis
 (`dhar_attention.py`), with outputs in `artifacts/diagnostics/`.
 
