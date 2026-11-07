@@ -89,12 +89,27 @@ ends with a **Key results (highlighted)** cell. The full pipeline is drawn in `F
 
 ## 4. How to run
 
-**Google Colab (recommended for the full run).** Open each notebook with its Colab link below, then:
-`Runtime > Change runtime type > T4 GPU`; run notebooks **1 to 7 in order**, each with `Runtime > Run all`;
-to save an executed copy back, `File > Save a copy in GitHub` to this repo on `main`. The first cell clones the
-repo, pip-installs the requirements (keeping Colab's torch), and mounts Drive (`MOUNT_DRIVE = True`). Steps 1-2
-read the raw files from `MyDrive/JDsearch/` (`JDsearch.tar.gz` is extracted once); Steps 3-7 fall back to the
-committed `data/intermediate/` tables when the raw files are absent.
+**Google Colab (recommended for the full run).** No local setup is needed. To reproduce the pipeline:
+
+1. **Put the raw data in your Google Drive.** Download `JDsearch.tar.gz` from the official repository
+   (https://github.com/rucliujn/JDsearch) and upload it, without extracting it, to a folder named `JDsearch`
+   directly in My Drive: `MyDrive/JDsearch/JDsearch.tar.gz`. Only Steps 1 and 2 need it.
+2. **Open the notebooks in order (1 to 7)** with the links in the table below.
+3. **Choose the runtime:** `Runtime > Change runtime type > T4 GPU` (needed for Step 5, optional for the rest).
+4. **Run everything:** `Runtime > Run all`. If Colab warns that the notebook comes from GitHub, click `Run anyway`.
+5. **Allow Drive access** when asked (`Connect to Google Drive`, choose your account, `Allow`). Colab asks once per
+   notebook, because each notebook starts a new session. Each step saves its outputs to `MyDrive/JDsearch/runs/corrected`,
+   so the next notebook finds them.
+6. **Check the last cell**, `Key results (highlighted)`, of each notebook.
+
+What the first cell does: it clones this repository, installs the requirements (keeping Colab's own torch), mounts
+Drive and extracts `JDsearch.tar.gz` once. Steps 3 to 7 also run without the raw files: they fall back to the committed
+tables in `data/intermediate/`. If the first cell stops with `OSError: [Errno 5] Input/output error` while reading the
+tarball, this is a temporary Google Drive read error: run `Runtime > Run all` again.
+
+**Verified on free Colab:** Steps 1, 2 and 3 were run on the free Colab runtime (about 12 GB RAM) and reproduce the
+committed split fingerprint and features exactly. Step 3's feature build was reduced to a peak of about 7.5 GB so that
+it fits. The saved outputs in the notebooks come from the local run described in `Final Project/notebooks/README.md`.
 
 | Step | Open in Colab |
 |---|---|
