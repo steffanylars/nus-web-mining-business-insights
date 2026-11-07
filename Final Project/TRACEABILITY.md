@@ -2,7 +2,7 @@
 
 Every number reported in the slides/report is listed here with the committed file it comes from and how to
 recompute it. NDCG@10 values are the TEST split unless noted. Checked against `artifacts/` and
-`data/intermediate/` on 7 Nov 2026. **29 OK, 0 MISMATCH, 1 to recompute** (see the last row).
+`data/intermediate/` on 7 Nov 2026. **30 OK, 0 MISMATCH.**
 
 | Claim | Value | File | How to recompute (notebook / section) |
 |---|---|---|---|
@@ -35,8 +35,6 @@ recompute it. NDCG@10 values are the TEST split unless noted. Checked against `a
 | Temporal: orders up to a year | no orders >=365d | `retention_cutoffs.txt`, `temporal_type_by_daybin.csv` (ORD) | Step 1 |
 | DHAR attention mass by age/type per tower | short: 0 mass >90d, cart-leaning; order: 0.58 mass >90d | `diagnostics/dhar_attention_by_age_type.csv` | Step 6, attention cell (`dhar_attention.py`) |
 | Seed sensitivity (DHAR vs MLP) | DHAR 0.3731 (sd 0.0018), MLP 0.3749 (sd 0.0018); gap flips sign across seeds | `diagnostics/multiseed_summary.csv` | Step 5, multi-seed cell (`multiseed.py`) |
-| **459 of 20,000 users have <=2 events** | **recompute** | not in committed files | Step 2: count users with <=2 history events across all splits (user-level, not the 63 test queries in `segment_metrics.csv`) |
+| 459 of 20,000 users have <=2 events | 459 | Step2_Build_Dataset.ipynb output (`sessions with n_hist == 0: 0 \| n_hist <= 2: 459`) | Step 2, Part A user-history summary |
 
-The final row is a report-level claim that cannot be checked from the committed artifacts (the committed files
-only expose the 63 **test** queries from <=2-event users, not the all-split user count). Recompute it in Step 2
-before citing it, or drop it. See the final report's "Needs Steff" note.
+All 30 reported values are traceable to a committed file and OK.

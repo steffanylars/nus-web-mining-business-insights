@@ -82,6 +82,9 @@ def _tower_mass_proj(model, dev, sids, tagged_tower, cand_c3_by_sid, L, types, p
 
     age_mass = np.zeros(len(AGE_NAMES), dtype=np.float64)
     type_mass = np.zeros(n_types, dtype=np.float64)
+    # Uniform-attention baseline (what 1/len weights over the eligible events would give):
+    base_age = np.zeros(len(AGE_NAMES), dtype=np.float64)
+    base_type = np.zeros(n_types, dtype=np.float64)
     n_pairs = 0
     sqrt_d = math.sqrt(model.ec3.embedding_dim)
     for a in range(0, len(sids), BATCH):
@@ -103,12 +106,18 @@ def _tower_mass_proj(model, dev, sids, tagged_tower, cand_c3_by_sid, L, types, p
         score = score.masked_fill(~smask[:, None, :], -1e9)
         w = torch.softmax(score, dim=-1) * smask[:, None, :].float()
         w = w / w.sum(-1, keepdim=True).clamp_min(1e-9)             # [b, W, L]
-        w = w * torch.from_numpy(cmask).to(dev)[:, :, None]         # zero padded candidates
+        cm = torch.from_numpy(cmask).to(dev)
+        w = w * cm[:, :, None]                                      # zero padded candidates
+        # Uniform baseline: equal weight 1/len over a session's eligible positions.
+        unif = smask.float() / smask.float().sum(-1, keepdim=True).clamp_min(1)   # [b, L]
+        wu = unif[:, None, :] * cm[:, :, None]                      # [b, W, L]
         age = torch.from_numpy(age_oh[a:a + b]).to(dev)            # [b, L, 5]
         typ = torch.from_numpy(type_oh[a:a + b]).to(dev)          # [b, L, T]
         age_mass += torch.einsum('bwl,blk->k', w, age).cpu().double().numpy()
         type_mass += torch.einsum('bwl,blt->t', w, typ).cpu().double().numpy()
-    return age_mass, type_mass, n_pairs
+        base_age += torch.einsum('bwl,blk->k', wu, age).cpu().double().numpy()
+        base_type += torch.einsum('bwl,blt->t', wu, typ).cpu().double().numpy()
+    return age_mass, type_mass, base_age, base_type, n_pairs
 
 
 def main():
@@ -179,16 +188,21 @@ def main():
         print(f'[slow] full run exceeded {MAX_SECONDS}s; using {sample_note}', flush=True)
         res = run_towers(sample)
 
+    def _row(tower, dim, bucket, mass, base, n):
+        share = base / n
+        return dict(tower=tower, dimension=dim, bucket=bucket,
+                    mean_attention_mass=mass / n, baseline_share=share,
+                    ratio_attn_over_baseline=(mass / base if base else float('nan')),
+                    queries=sample_note)
+
     rows = []
     for tower in ('short', 'order'):
-        age_mass, type_mass, n = res[tower]
+        age_mass, type_mass, base_age, base_type, n = res[tower]
         n = max(n, 1)
         for k, bname in enumerate(AGE_NAMES):
-            rows.append(dict(tower=tower, dimension='age_bin', bucket=bname,
-                             mean_attention_mass=age_mass[k] / n, queries=sample_note))
+            rows.append(_row(tower, 'age_bin', bname, age_mass[k], base_age[k], n))
         for i, tp in enumerate(TOWER_TYPES[tower]):
-            rows.append(dict(tower=tower, dimension='action_type', bucket=tp,
-                             mean_attention_mass=type_mass[i] / n, queries=sample_note))
+            rows.append(_row(tower, 'action_type', tp, type_mass[i], base_type[i], n))
     df = pd.DataFrame(rows)
     csv_path = RES / 'dhar_attention_by_age_type.csv'
     df.to_csv(csv_path, index=False)
@@ -196,6 +210,10 @@ def main():
     for tower in ('short', 'order'):
         s = df[(df.tower == tower) & (df.dimension == 'age_bin')].mean_attention_mass.sum()
         print(f'[sanity] {tower} age-bin mass sum = {s:.4f}')
+    print('[note] the SHORT tower has 0 attention mass beyond 90 days BY CONSTRUCTION: its '
+          'sequence only holds clicks <=7d and carts <=90d. baseline_share is the uniform-attention '
+          'mass (share of eligible events in each bin); ratio_attn_over_baseline > 1 means the tower '
+          'over-weights that bin vs uniform.')
 
     # Figure: grouped bar of mean attention mass by age bin.
     sv = [df[(df.tower == 'short') & (df.bucket == b) & (df.dimension == 'age_bin')]
