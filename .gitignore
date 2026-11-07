@@ -24,9 +24,10 @@ Final Project/artifacts/corrected/model/*.pt
 Final Project/artifacts/corrected/model/*.joblib
 Final Project/artifacts/corrected/model/neural_preprocessing.json
 # Keep the small committed intermediary tables, ignore everything else under data/.
+# meta_subset here is the slim 3-column copy (wid, cate_id_3, brand_id); the full 409 MB table is regenerated.
 Final Project/data/*
 !Final Project/data/intermediate/
-# meta_subset.parquet is >95 MB; regenerate with src/step1_preprocess_temporal.py + step2_build_dataset.py.
-Final Project/data/intermediate/meta_subset.parquet
 audit/report_text.txt
 .venv/
+# Local-only git bundles (not part of the deliverable)
+*.bundle
