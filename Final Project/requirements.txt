@@ -1,4 +1,5 @@
-# Validated with Python 3.12.14 on Windows CPU.
+# Validated locally on macOS (Python 3.12, Apple M4, CPU/MPS) on 7 Nov 2026.
+# Colab: install these except torch (keep Colab's preinstalled torch); Colab run to be confirmed.
 numpy==2.5.4
 pandas==3.0.1
 pyarrow==19.0.1

@@ -1,3 +1,6 @@
+> **Superseded working note — archived.** Internal draft kept only for history; it does not reflect the
+> final submission. Current numbers are in `artifacts/corrected/RESULTS.md` and the final report.
+
 # Personalised product search on JDSearch
 
 ## Corrected experiment status

@@ -1,0 +1,14 @@
+tower,dimension,bucket,mean_attention_mass
+short,age_bin,<1d,0.16401162109040304
+short,age_bin,1-7d,0.296172865182199
+short,age_bin,7-30d,0.1768203729841603
+short,age_bin,30-90d,0.36299515203750937
+short,age_bin,>90d,0.0
+short,action_type,CART,0.6083926414005478
+short,action_type,CLICK,0.3916073700270317
+order,age_bin,<1d,0.019313920241733614
+order,age_bin,1-7d,0.05132252657612737
+order,age_bin,7-30d,0.13062909382255322
+order,age_bin,30-90d,0.21924203644953405
+order,age_bin,>90d,0.5794924315085676
+order,action_type,ORD,1.0000000055000864
