@@ -17,7 +17,7 @@ FORBIDDEN = '\u2014\u2013\u2212'  # em dash, en dash, minus sign
 
 STEPS = {
     'Step2_Build_Dataset.ipynb': 'step2_build_dataset.py',
-    'Step3_Feature_Engineering.ipynb': 'step3_features.py',
+    'Step3_Feature_Engineering Final.ipynb': 'step3_features.py',
     'Step4_Baselines_LambdaMART.ipynb': 'step4_baselines_lgbm.py',
     'Step5_Neural_Rankers_DHAR.ipynb': 'step5_neural.py',
     'Step6_Diagnostics.ipynb': 'step6_diagnostics.py',

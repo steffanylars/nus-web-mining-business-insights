@@ -1,0 +1,50 @@
+{
+  "full_model_source": "stage4 lgb_model.txt",
+  "history_free_features": [
+    "query_len",
+    "slate_size",
+    "has_meta",
+    "ov_name",
+    "ov_cat",
+    "ov_brand",
+    "jacc_name",
+    "pop_wid",
+    "pop_cate3",
+    "pop_brand"
+  ],
+  "fallback_best_iteration": 46,
+  "routing": {
+    "selected_threshold": -1,
+    "rule": "max validation NDCG@10 (ties -> smaller threshold)",
+    "cold_test_sessions": 0,
+    "cold_test_share": 0.0,
+    "routed_minus_full_test": {
+      "delta": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "positive_queries": 2965
+    }
+  },
+  "diversification": {
+    "selected_lambda": 0.0,
+    "top_k": 10,
+    "rule": "largest lambda with validation NDCG@10 within 0.005 of lambda=0",
+    "category_key": "cate_id_3"
+  },
+  "test_full": {
+    "NDCG@10": 0.3630055454799993,
+    "MRR@200": 0.3668825923922184,
+    "P@1": 0.22967959527824622,
+    "HR@10": 0.651602023608769
+  },
+  "test_final": {
+    "NDCG@10": 0.3630055454799993,
+    "MRR@200": 0.3668825923922184,
+    "P@1": 0.22967959527824622,
+    "HR@10": 0.651602023608769
+  },
+  "test_positive_queries": 2965,
+  "interpretation": "one seed; thresholds and lambda selected on validation only; bootstrap reflects query resampling for fixed models"
+}

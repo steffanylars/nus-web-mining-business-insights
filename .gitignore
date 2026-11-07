@@ -23,6 +23,10 @@ Final Project/artifacts/corrected/model/features.parquet
 Final Project/artifacts/corrected/model/*.pt
 Final Project/artifacts/corrected/model/*.joblib
 Final Project/artifacts/corrected/model/neural_preprocessing.json
-Final Project/data/
+# Keep the small committed intermediary tables, ignore everything else under data/.
+Final Project/data/*
+!Final Project/data/intermediate/
+# meta_subset.parquet is >95 MB; regenerate with src/step1_preprocess_temporal.py + step2_build_dataset.py.
+Final Project/data/intermediate/meta_subset.parquet
 audit/report_text.txt
 .venv/

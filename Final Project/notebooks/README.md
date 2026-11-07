@@ -8,7 +8,7 @@ cell is cut from the matching script in `src/`, so the notebook and the script c
 |---|---|---|---|---|
 | 1 | `Step1_Temporal_Analysis.ipynb` | `step1_preprocess_temporal.py`, `step1b_retention_cutoffs.py` | yes (957 MB user file) | `temporal_type_by_daybin.csv`, `temporal_summary.txt`, `retention_daily.csv`, `retention_cutoffs.txt` |
 | 2 | `Step2_Build_Dataset.ipynb` | `step2_build_dataset.py` | yes (user file and 4.8 GB product file) | `candidates`, `history`, `sessions`, `meta_subset` (`.parquet`), `dataset_manifest.json` |
-| 3 | `Step3_Feature_Engineering.ipynb` | `step3_features.py` | no, Step 2 tables | `features.parquet`, `feature_summary.json` |
+| 3 | `Step3_Feature_Engineering Final.ipynb` | `step3_features.py` | no, Step 2 tables | `features.parquet`, `feature_summary.json` |
 | 4 | `Step4_Baselines_LambdaMART.ipynb` | `step4_baselines_lgbm.py` | no, Steps 2 and 3 tables | `lgb_model.txt`, `test_pred_lgb.parquet`, `results_baselines_lgb.json` |
 | 5 | `Step5_Neural_Rankers_DHAR.ipynb` | `step5_neural.py` | no, Steps 2 and 3 tables (GPU recommended) | checkpoints, `test_pred_neural.parquet`, `results_neural.json` |
 | 6 | `Step6_Diagnostics.ipynb` | `step6_diagnostics.py` | no, Steps 2 to 5 outputs | `segment_metrics.csv`, `paired_bootstrap.json`, `ablation.json`, ... |
@@ -33,12 +33,12 @@ cell is cut from the matching script in `src/`, so the notebook and the script c
 
 ## What the saved outputs in this copy are
 
-| Step | Saved outputs come from |
-|---|---|
-| 1 | A run on the full raw file (173,831 users) by the teammate who wrote it |
-| 2, 3, 5, 6 | Part B executed on the committed corrected-run artifacts. Part A is **not executed** in this copy (it needs the raw files); run it once in Colab to keep its outputs as well |
-| 4 | Part A executed locally on Windows CPU on 7 November 2026 using the prior corrected Step 2/3 tables. All five rankers have train, validation and test metrics; all 15 combinations were checked against saved candidate predictions. This is not Colab execution. Input hashes and versions are in `artifacts/corrected/step4_execution.json`. The new train/validation candidate predictions remain local; when unavailable, Part B explicitly skips their recomputation while still showing saved split metrics. |
-| 7 | Part A executed on the 26 October **draft** tables (same 20,000 users and split as the corrected run, verified by session id); the corrected `features.parquet` is not committed. Rerun after Steps 2 to 4 |
+All 7 notebooks, **Part A and Part B**, were executed locally on a MacBook Pro (Apple M4, MPS for
+Step 5) on 7 November 2026 from commit `4a6e32d`. Random, Popularity, Content and LambdaMART reproduce
+the `artifacts/corrected` NDCG@10 values exactly (train, validation and test); SVD matches to within
+2e-5 NDCG@10 (nondeterministic randomized SVD), rounding to the same reported figure. Neural test
+NDCG@10 differs by up to 0.0034 (Apple MPS is not bitwise deterministic). The report still uses the
+figures in `artifacts/corrected`.
 
 ## Notes from building these notebooks
 
